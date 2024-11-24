@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace src;
-internal static class RequestParser
+internal static class RequestProcessor
 {
     const string METHOD = "POST";
     const string ALLOWEDCONTENTTYPE = "application/json";

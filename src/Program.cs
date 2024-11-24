@@ -1,4 +1,5 @@
 ﻿using src;
+using src.Processors;
 using System.Net;
 using System.Runtime.CompilerServices;
 
@@ -26,9 +27,9 @@ void ReceivedRequest(IAsyncResult ar)
     var requestLength = (int)context.Request.ContentLength64;
     Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
 
-    if (RequestParser.TryProcessForBlockChainNetworks(context.Request, requestContext))
+    if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, requestContext))
     {
-
+        ResponseProcessor.ProcessRequest(ref requestContext, context.Response);
         return;
     }
 
