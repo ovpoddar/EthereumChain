@@ -17,19 +17,16 @@ using (var listener = new HttpListener())
     Console.ReadLine();
 }
 
-[SkipLocalsInit]
 void ReceivedRequest(IAsyncResult ar)
 {
     var listener = ar.AsyncState as HttpListener;
     if (listener == null)
         return;
     var context = listener.EndGetContext(ar);
-    var requestLength = (int)context.Request.ContentLength64;
-    Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
-
-    if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, requestContext))
+    if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, out var request))
     {
-        ResponseProcessor.ProcessRequest(ref requestContext, context.Response);
+        ResponseProcessor.ProcessRequest(ref request, context.Response);
+        listener.BeginGetContext(ReceivedRequest, listener);
         return;
     }
 
