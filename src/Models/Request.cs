@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace src.Models;
+// todo Update the processing concept over here.
 internal struct Request
 {
     [JsonPropertyName("method")]

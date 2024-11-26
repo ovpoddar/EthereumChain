@@ -40,6 +40,11 @@ internal static class ResponseProcessor
             case "eth_gasPrice":
                 response.Write(Setting.GasPriceFormattedByte);
                 break;
+            case "eth_estimateGas":
+                Debug.Assert(requestContext.Params != null);
+                var estGas = new EstimateGas();
+                response.Write(RequestHandler.ProcessEthEstimateGas(ref estGas));
+                break;
         }
     }
 }

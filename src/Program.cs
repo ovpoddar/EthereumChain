@@ -24,6 +24,7 @@ void ReceivedRequest(IAsyncResult ar)
         return;
 
     var context = listener.EndGetContext(ar);
+
     if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, out var request))
     {
         context.Response.OutputStream.Write("{"u8);
