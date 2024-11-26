@@ -32,7 +32,7 @@ internal static class RequestProcessor
         request.InputStream.ReadExactly(requestContext);
         requestObject = JsonSerializer.Deserialize<Request>(requestContext);
 
-        if (requestObject.RPCVersion != null && requestObject.RPCVersion != "2.0")
+        if (requestObject.RPCVersion != null && requestObject.RPCVersion != Setting.WorkingRpcVersion)
             return false;
 
         return true;

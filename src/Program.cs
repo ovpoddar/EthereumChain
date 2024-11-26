@@ -2,6 +2,7 @@
 using src.Processors;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 const int LISTENERPORT = 9546;
 
@@ -19,13 +20,25 @@ using (var listener = new HttpListener())
 
 void ReceivedRequest(IAsyncResult ar)
 {
-    var listener = ar.AsyncState as HttpListener;
-    if (listener == null)
+    if (ar.AsyncState is not HttpListener listener)
         return;
+
     var context = listener.EndGetContext(ar);
     if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, out var request))
     {
-        ResponseProcessor.ProcessRequest(ref request, context.Response);
+        context.Response.OutputStream.Write("{"u8);
+
+        context.Response.OutputStream.Write("\"jsonrpc\":\""u8);
+        context.Response.OutputStream.Write(Setting.WorkingRpcVersionByte);
+        context.Response.OutputStream.Write("\","u8);
+
+        if (request.Id != null)
+            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"\"id\":{request.Id},"));
+
+        ResponseProcessor.ProcessRequest(ref request, context.Response.OutputStream);
+
+        context.Response.OutputStream.Write("}"u8);
+        context.Response.OutputStream.Close();
         listener.BeginGetContext(ReceivedRequest, listener);
         return;
     }
