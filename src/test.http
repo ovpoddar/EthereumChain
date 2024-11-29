@@ -24,9 +24,6 @@ POST {{Url}}
 Content-Type: application/json
 
 {
-	"id":9661311584379,
-	"jsonrpc":"2.0",
-	"method":"eth_estimateGas",
 	"params":
 	[{
 		"from":"0x5561035012fcb5d4af49a200412de5545087d3d6",
@@ -34,6 +31,21 @@ Content-Type: application/json
 		"gasPrice":"0x4a817c800",
 		"data":"0x",
 		"to":"0x8b029e7733e1eff582d17ec9e9f9a45f745bcb05"
-	}]
+	}],
+	"id":9661311584379,
+	"jsonrpc":"2.0",
+	"method":"eth_estimateGas"	
+}
+###
+
+
+POST {{Url}}
+Content-Type: application/json
+
+{
+	"params": ["0x5561035012fcb5d4af49a200412de5545087d3d6", "0x29a2241af62c0000"],
+	"id":9661311584379,
+	"jsonrpc":"2.0",
+	"method":"eth_getCode"	
 }
 ###

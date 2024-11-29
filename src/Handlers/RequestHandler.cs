@@ -11,11 +11,11 @@ internal static class RequestHandler
     public static ReadOnlySpan<byte> ProcessEthGetCode(string accountAddress, string targetBlock)
     {
         // process how ever see fit
-        return "0x"u8;
+        return "\"0x\""u8;
     }
 
     public static ReadOnlySpan<byte> ProcessEthEstimateGas(ref EstimateGas estimateGas)
     {
-        return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"0x{21000:x}"));
+        return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
     }
 }

@@ -1,4 +1,4 @@
-﻿using src.Models;
+﻿using src.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace src;
+namespace src.Processors;
 internal static class RequestProcessor
 {
     const string METHOD = "POST";
@@ -29,7 +29,7 @@ internal static class RequestProcessor
         var rpcVersionRange = RequestSerializer.GetValueAs<Range>(ref requestContext, "jsonrpc");
         var rpcVersion = requestContext[rpcVersionRange.Start..rpcVersionRange.End];
 
-        if (!MemoryExtensions.SequenceEqual(rpcVersion, Setting.WorkingRpcVersionByte))
+        if (!rpcVersion.SequenceEqual(Setting.WorkingRpcVersionByte))
             return false;
 
         return true;

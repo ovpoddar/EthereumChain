@@ -30,19 +30,16 @@ internal static class ResponseProcessor
                 break;
 
             case "eth_getCode":
-                //Debug.Assert(requestContext.Params != null);
-                //Debug.Assert(requestContext.Params.Length == 2);
-
-                //var accountAddress = requestContext.Params[0];
-                //var targetedBlockType = requestContext.Params[1];
-                //response.Write(RequestHandler.ProcessEthGetCode(accountAddress, targetedBlockType));
+                var codeDet = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
+                response.Write(RequestHandler.ProcessEthGetCode(codeDet[0], codeDet[1]));
                 break;
 
             case "eth_gasPrice":
                 response.Write(Setting.GasPriceFormattedByte);
                 break;
+
             case "eth_estimateGas":
-                var estGas = RequestSerializer.GetValueAs<EstimateGas[]>(ref requestContext, "params");
+                var estGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estGas[0]));
                 break;
         }
