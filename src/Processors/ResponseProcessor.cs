@@ -30,8 +30,8 @@ internal static class ResponseProcessor
                 break;
 
             case "eth_getCode":
-                var codeDet = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
-                response.Write(RequestHandler.ProcessEthGetCode(codeDet[0], codeDet[1]));
+                var codeDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
+                response.Write(RequestHandler.ProcessEthGetCode(codeDetails[0], codeDetails[1]));
                 break;
 
             case "eth_gasPrice":
@@ -39,9 +39,23 @@ internal static class ResponseProcessor
                 break;
 
             case "eth_estimateGas":
-                var estGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
-                response.Write(RequestHandler.ProcessEthEstimateGas(ref estGas[0]));
+                var estimateGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
+                response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
+                break;
+
+            default:
+                Console.WriteLine(method);
                 break;
         }
+    }
+
+    internal static void SetUpHeaders(HttpListenerContext context)
+    {
+        context.Response.Headers.Clear();
+        context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "POST");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "content-type");
+        context.Response.Headers.Add("content-type", "application/json");
+
     }
 }

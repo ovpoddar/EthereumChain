@@ -29,6 +29,8 @@ void ReceivedRequest(IAsyncResult ar)
     Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
     context.Request.InputStream.ReadExactly(requestContext);
 
+    ResponseProcessor.SetUpHeaders(context);
+
     if (RequestProcessor.CanProcessAsBlockChainRequest(context.Request, ref requestContext))
     {
         context.Response.OutputStream.Write("{"u8);
