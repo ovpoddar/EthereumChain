@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -16,23 +17,19 @@ internal static class RequestProcessor
     const string TARGETEDPATH = "/";
 
     [SkipLocalsInit]
-    internal static bool TryProcessForBlockChainNetworks(HttpListenerRequest request, out Request requestObject)
+    internal static bool CanProcessAsBlockChainRequest(HttpListenerRequest request, ref Span<byte> requestContext)
     {
-        requestObject = new();
         if (!string.Equals(request.HttpMethod, METHOD, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(request.ContentType, ALLOWEDCONTENTTYPE, StringComparison.OrdinalIgnoreCase)
             || request.Url == null
             || !string.Equals(request.Url.AbsolutePath, TARGETEDPATH, StringComparison.OrdinalIgnoreCase)
-            || request.IsWebSocketRequest
-            )
+            || request.IsWebSocketRequest)
             return false;
 
-        var requestLength = (int)request.ContentLength64;
-        Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
-        request.InputStream.ReadExactly(requestContext);
-        requestObject = JsonSerializer.Deserialize<Request>(requestContext);
+        var rpcVersionRange = RequestSerializer.GetValueAs<Range>(ref requestContext, "jsonrpc");
+        var rpcVersion = requestContext[rpcVersionRange.Start..rpcVersionRange.End];
 
-        if (requestObject.RPCVersion != null && requestObject.RPCVersion != Setting.WorkingRpcVersion)
+        if (!MemoryExtensions.SequenceEqual(rpcVersion, Setting.WorkingRpcVersionByte))
             return false;
 
         return true;

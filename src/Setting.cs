@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace src;
 internal static class Setting
 {
-    public static readonly string WorkingRpcVersion = "2.0";
+    public static readonly string WorkingRpcVersion = "\"2.0\"";
     private static readonly ushort NetWorkId = 1;
     // check all the chain list in https://chainid.network/
     private static readonly ushort ChainId = 1;

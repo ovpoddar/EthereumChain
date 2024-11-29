@@ -1,4 +1,5 @@
 ﻿using src;
+using src.Models;
 using src.Processors;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -24,19 +25,27 @@ void ReceivedRequest(IAsyncResult ar)
         return;
 
     var context = listener.EndGetContext(ar);
+    var requestLength = (int)context.Request.ContentLength64;
+    Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
+    context.Request.InputStream.ReadExactly(requestContext);
 
-    if (RequestProcessor.TryProcessForBlockChainNetworks(context.Request, out var request))
+    if (RequestProcessor.CanProcessAsBlockChainRequest(context.Request, ref requestContext))
     {
         context.Response.OutputStream.Write("{"u8);
 
-        context.Response.OutputStream.Write("\"jsonrpc\":\""u8);
+        context.Response.OutputStream.Write("\"jsonrpc\":"u8);
         context.Response.OutputStream.Write(Setting.WorkingRpcVersionByte);
-        context.Response.OutputStream.Write("\","u8);
+        context.Response.OutputStream.Write(","u8);
 
-        if (request.Id != null)
-            context.Response.OutputStream.Write(Encoding.UTF8.GetBytes($"\"id\":{request.Id},"));
+        var idRange = RequestSerializer.GetValueAs<Range>(ref requestContext, "id");
+        if (idRange.Start.Value != 0 && idRange.End.Value != 0)
+        {
+            context.Response.OutputStream.Write("\"id\":"u8);
+            context.Response.OutputStream.Write(requestContext[idRange.Start..idRange.End]);
+            context.Response.OutputStream.Write(","u8);
+        }
 
-        ResponseProcessor.ProcessRequest(ref request, context.Response.OutputStream);
+        ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream);
 
         context.Response.OutputStream.Write("}"u8);
         context.Response.OutputStream.Close();

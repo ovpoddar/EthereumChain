@@ -11,10 +11,11 @@ using System.Threading.Tasks;
 namespace src.Processors;
 internal static class ResponseProcessor
 {
-    internal static void ProcessRequest(ref Request requestContext, Stream response)
+    internal static void ProcessRequest(ref Span<byte> requestContext, Stream response)
     {
         response.Write("\"result\":"u8);
-        switch (requestContext.Method)
+        var method = RequestSerializer.GetValueAs<string>(ref requestContext, "method");
+        switch (method)
         {
             case "eth_currencySymbol":
                 response.Write("\"ETH\""u8);
@@ -29,21 +30,20 @@ internal static class ResponseProcessor
                 break;
 
             case "eth_getCode":
-                Debug.Assert(requestContext.Params != null);
-                Debug.Assert(requestContext.Params.Length == 2);
+                //Debug.Assert(requestContext.Params != null);
+                //Debug.Assert(requestContext.Params.Length == 2);
 
-                var accountAddress = requestContext.Params[0];
-                var targetedBlockType = requestContext.Params[1];
-                response.Write(RequestHandler.ProcessEthGetCode(accountAddress, targetedBlockType));
+                //var accountAddress = requestContext.Params[0];
+                //var targetedBlockType = requestContext.Params[1];
+                //response.Write(RequestHandler.ProcessEthGetCode(accountAddress, targetedBlockType));
                 break;
 
             case "eth_gasPrice":
                 response.Write(Setting.GasPriceFormattedByte);
                 break;
             case "eth_estimateGas":
-                Debug.Assert(requestContext.Params != null);
-                var estGas = new EstimateGas();
-                response.Write(RequestHandler.ProcessEthEstimateGas(ref estGas));
+                var estGas = RequestSerializer.GetValueAs<EstimateGas[]>(ref requestContext, "params");
+                response.Write(RequestHandler.ProcessEthEstimateGas(ref estGas[0]));
                 break;
         }
     }
