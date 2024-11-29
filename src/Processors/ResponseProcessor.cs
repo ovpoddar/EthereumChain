@@ -43,6 +43,8 @@ internal static class ResponseProcessor
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
                 break;
 
+            //TODO: implement own custom chain and infrastructure.
+
             default:
                 Console.WriteLine(method);
                 break;
