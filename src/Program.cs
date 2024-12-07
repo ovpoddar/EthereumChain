@@ -7,6 +7,7 @@ using System.Text;
 using src.Helpers;
 using src.Processors.Database;
 using src.Processors.HTTP;
+using src.Models;
 
 const int LISTENERPORT = 9546;
 
@@ -20,16 +21,16 @@ using (var listener = new HttpListener())
         Console.WriteLine($"application is listening on {item}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
-    listener.BeginGetContext(ReceivedRequest, listener);
+    listener.BeginGetContext(ReceivedRequest, new ProcesserModels(listener, sqlConnection));
     Console.ReadLine();
 }
 
 static void ReceivedRequest(IAsyncResult ar)
 {
-    if (ar.AsyncState is not HttpListener listener)
+    if (ar.AsyncState is not ProcesserModels requestProcesser)
         return;
 
-    var context = listener.EndGetContext(ar);
+    var context = requestProcesser.Listener.EndGetContext(ar);
     var requestLength = (int)context.Request.ContentLength64;
     Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
     context.Request.InputStream.ReadExactly(requestContext);
@@ -52,17 +53,17 @@ static void ReceivedRequest(IAsyncResult ar)
             context.Response.OutputStream.Write(","u8);
         }
 
-        ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream);
+        ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection);
 
         context.Response.OutputStream.Write("}"u8);
         context.Response.OutputStream.Close();
-        listener.BeginGetContext(ReceivedRequest, listener);
+        requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
         return;
     }
 
     context.Response.OutputStream.Write("hello World! it's listening"u8);
     context.Response.OutputStream.Close();
-    listener.BeginGetContext(ReceivedRequest, listener);
+    requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
 }
 
 static SQLiteConnection InitializedDatabase()

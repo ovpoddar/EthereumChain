@@ -2,6 +2,7 @@
 using src.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 namespace src.Processors.HTTP;
 internal static class ResponseProcessor
 {
-    internal static void ProcessRequest(ref Span<byte> requestContext, Stream response)
+    internal static void ProcessRequest(ref Span<byte> requestContext, Stream response, SQLiteConnection sqLiteConnection)
     {
         response.Write("\"result\":"u8);
         var method = RequestSerializer.GetValueAs<string>(ref requestContext, "method");
