@@ -1,12 +1,16 @@
-﻿using src;
+﻿using System.Data.SQLite;
+using src;
 using src.Handlers;
-using src.Processors;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
+using src.Helpers;
+using src.Processors.Database;
+using src.Processors.HTTP;
 
 const int LISTENERPORT = 9546;
 
+using (var sqlConnection = InitializedDatabase())
 using (var listener = new HttpListener())
 {
     listener.Prefixes.Add($"http://localhost:{LISTENERPORT}/");
@@ -15,11 +19,12 @@ using (var listener = new HttpListener())
     foreach (var item in listener.Prefixes)
         Console.WriteLine($"application is listening on {item}");
 
+    await StructureProcesser.MigrationStructure(sqlConnection);
     listener.BeginGetContext(ReceivedRequest, listener);
     Console.ReadLine();
 }
 
-void ReceivedRequest(IAsyncResult ar)
+static void ReceivedRequest(IAsyncResult ar)
 {
     if (ar.AsyncState is not HttpListener listener)
         return;
@@ -58,4 +63,12 @@ void ReceivedRequest(IAsyncResult ar)
     context.Response.OutputStream.Write("hello World! it's listening"u8);
     context.Response.OutputStream.Close();
     listener.BeginGetContext(ReceivedRequest, listener);
+}
+
+static SQLiteConnection InitializedDatabase()
+{
+    var file = Setting.EthereumChainStoragePath.EnsureEndsWith(".db", StringComparison.OrdinalIgnoreCase);
+    if (!File.Exists(file))
+        SQLiteConnection.CreateFile(file);
+    return new SQLiteConnection($"Data Source={file};Version=3;");
 }

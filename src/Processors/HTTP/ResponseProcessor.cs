@@ -8,7 +8,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Processors;
+namespace src.Processors.HTTP;
 internal static class ResponseProcessor
 {
     internal static void ProcessRequest(ref Span<byte> requestContext, Stream response)

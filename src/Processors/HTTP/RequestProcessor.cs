@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace src.Processors;
+namespace src.Processors.HTTP;
 internal static class RequestProcessor
 {
     const string METHOD = "POST";

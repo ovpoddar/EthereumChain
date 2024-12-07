@@ -12,6 +12,7 @@ internal static class Setting
     // check all the chain list in https://chainid.network/
     private static readonly ushort ChainId = 6;
     private static readonly long GASPrice = 20000000000;
+    public static readonly string EthereumChainStoragePath = "./storage.db";
 
     public static readonly byte[] WorkingRpcVersionByte = Encoding.UTF8.GetBytes(WorkingRpcVersion);
     public static readonly byte[] NetWorkIdFormattedByte = Encoding.UTF8.GetBytes($"\"{NetWorkId}\"");
