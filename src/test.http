@@ -49,3 +49,15 @@ Content-Type: application/json
 	"method":"eth_getCode"	
 }
 ###
+
+POST {{Url}}
+Content-Type: application/json
+
+{
+	
+	"params": ["0x5561035012fcb5d4af49a200412de5545087d3d6"],
+	"id":9661311584379,
+	"jsonrpc":"2.0",
+	"method":"eth_sendRawTransaction"	
+}
+###
