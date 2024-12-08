@@ -68,7 +68,7 @@ static void ReceivedRequest(IAsyncResult ar)
 
 static SQLiteConnection InitializedDatabase()
 {
-    var file = Setting.EthereumChainStoragePath.EnsureEndsWith(".db", StringComparison.OrdinalIgnoreCase);
+    var file = Setting.EthereumChainStoragePath.EnsureEndsWith(".sqlite", StringComparison.OrdinalIgnoreCase);
     if (!File.Exists(file))
         SQLiteConnection.CreateFile(file);
     return new SQLiteConnection($"Data Source={file};Version=3;");

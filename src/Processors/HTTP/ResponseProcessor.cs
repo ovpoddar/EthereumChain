@@ -44,6 +44,10 @@ internal static class ResponseProcessor
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
                 break;
 
+            case "eth_sendRawTransaction":
+                var transactionDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 1);
+                response.Write(RequestHandler.ProcessEthSendRawTransaction(transactionDetails[0], sqLiteConnection));
+                break;
             //TODO: implement own custom chain and infrastructure.
 
             default:
