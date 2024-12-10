@@ -1,4 +1,5 @@
-﻿using System;
+﻿using src.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,17 +17,10 @@ internal class MemPool
     public string V { get; }
     public string R { get; }
     public string S { get; }
-    internal MemPool(string transaction)
+    internal MemPool(Span<byte> transaction)
     {
-        Nonce = transaction;
-        GasLimit = transaction;
-        GasPrice = transaction;
-        To = transaction;
-        Value = transaction;
-        Data = transaction;
-        V = transaction;
-        R = transaction;
-        S = transaction;
+        Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
+        transaction.HexArrayToDecimalArray(decimalArray);
     }
     private MemPool()
     {

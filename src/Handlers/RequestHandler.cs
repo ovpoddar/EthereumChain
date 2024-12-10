@@ -21,11 +21,12 @@ internal static class RequestHandler
     }
 
     public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(string transaction, SQLiteConnection sqLiteConnection)
+    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
     {
         try
         {
             sqLiteConnection.Open();
-            var memPoolTransaction = new MemPool(transaction);
+            var memPoolTransaction = new MemPool(requestContext[1..^1]);
 
             using var processCommand = new SQLiteCommand("""
                 insert into MemPool (Nonce, GasPrice, GasLimit, "To", "Value", Data, V, R, S)

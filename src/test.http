@@ -55,7 +55,20 @@ Content-Type: application/json
 
 {
 	
-	"params": ["0x5561035012fcb5d4af49a200412de5545087d3d6"],
+	"params": ["0xf86f81ab8504a817c80082520894e82083c8434b4395de90e58e7c0afab10a2d2aa4884563918244f4000080820d07a0fd42c57f8a6fc72a8d704737037ef0e8fc9b7e6351a5454fd25e41f6035eda92a03ca093f548d1198498cfd7f57122f98badb29dba29d7be06330821ae0552e5d0"],
+	"id":9661311584379,
+	"jsonrpc":"2.0",
+	"method":"eth_sendRawTransaction"	
+}
+###
+
+	
+POST {{Url}}
+Content-Type: application/json
+
+{
+	
+	"params": ["0x"],
 	"id":9661311584379,
 	"jsonrpc":"2.0",
 	"method":"eth_sendRawTransaction"	
