@@ -29,10 +29,11 @@ internal static class RequestHandler
             var memPoolTransaction = new MemPool(requestContext[1..^1]);
 
             using var processCommand = new SQLiteCommand("""
-                insert into MemPool (Nonce, GasPrice, GasLimit, "To", "Value", Data, V, R, S)
-                values (@Nonce, @GasPrice, @GasLimit, @ToVal, @ValueVal, @Data, @V, @R, @S);
+                insert into MemPool (Id, Nonce, GasPrice, GasLimit, "To", "Value", Data, V, R, S)
+                values (@Id, @Nonce, @GasPrice, @GasLimit, @ToVal, @ValueVal, @Data, @V, @R, @S);
                 """, sqLiteConnection);
 
+            processCommand.Parameters.AddWithValue("@Id", memPoolTransaction.Identity);
             processCommand.Parameters.AddWithValue("@Nonce", memPoolTransaction.Nonce);
             processCommand.Parameters.AddWithValue("@GasPrice", memPoolTransaction.GasPrice);
             processCommand.Parameters.AddWithValue("@GasLimit", memPoolTransaction.GasLimit);
@@ -43,7 +44,7 @@ internal static class RequestHandler
             processCommand.Parameters.AddWithValue("@R", memPoolTransaction.R);
             processCommand.Parameters.AddWithValue("@S", memPoolTransaction.S);
             var c = processCommand.ExecuteNonQuery();
-            return new ReadOnlySpan<byte>(memPoolTransaction.IdentifyerAsHex());
+            return new ReadOnlySpan<byte>(memPoolTransaction.IdentifierAsHex());
         }
         finally
         {

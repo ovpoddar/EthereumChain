@@ -3,6 +3,7 @@ using src.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -10,6 +11,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace src.Models;
 internal class MemPool
 {
+    public Guid Identity { get; }
     public string Nonce { get; }
     public string GasPrice { get; }
     public string GasLimit { get; }
@@ -21,6 +23,7 @@ internal class MemPool
     public string S { get; }
     internal MemPool(Span<byte> transaction)
     {
+        Identity = Guid.NewGuid();
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
@@ -37,8 +40,6 @@ internal class MemPool
         this.S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
     }
 
-    internal byte[]? IdentifyerAsHex()
-    {
-        return Encoding.UTF8.GetBytes("hellowworld");
-    }
+    internal byte[] IdentifierAsHex() =>
+        Identity.ToByteArray();
 }
