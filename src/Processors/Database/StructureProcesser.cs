@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Processors.Database;
+namespace API.Processors.Database;
 internal static class StructureProcesser
 {
     public static async Task MigrationStructure(SQLiteConnection connection)

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Helpers;
+namespace API.Helpers;
 internal static class Utilities
 {
     public static string EnsureEndsWith(this string value,
@@ -18,13 +18,13 @@ internal static class Utilities
 
     public static void HexArrayToDecimalArray(this Span<byte> hexArray, Span<byte> decimalArray)
     {
-        if (hexArray.Length == 0 || (hexArray.Length == 2 && (hexArray.SequenceEqual("0x"u8)
-            || hexArray.SequenceEqual("0X"u8))))
+        if (hexArray.Length == 0 || hexArray.Length == 2 && (hexArray.SequenceEqual("0x"u8)
+            || hexArray.SequenceEqual("0X"u8)))
             return;
 
         if (hexArray.Length / 2 != decimalArray.Length) throw new Exception("Not enough data to write.");
 
-            var processIndex = 0;
+        var processIndex = 0;
         if (hexArray[0] == '0' && hexArray[1] == 'X' || hexArray[1] == 'x')
             processIndex = 2;
 
@@ -50,7 +50,7 @@ internal static class Utilities
             > 0x29 and < 0x40 => (byte)(hexArray[1] - 0x30),
             _ => throw new NotImplementedException()
         };
-        return (byte)((first << 4) | second);
+        return (byte)(first << 4 | second);
     }
 
 }

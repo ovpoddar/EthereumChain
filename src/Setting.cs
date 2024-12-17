@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src;
+namespace API;
 internal static class Setting
 {
     public static readonly string WorkingRpcVersion = "\"2.0\"";

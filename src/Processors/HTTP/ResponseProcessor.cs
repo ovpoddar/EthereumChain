@@ -1,5 +1,6 @@
-﻿using src.Handlers;
-using src.Models;
+﻿using API;
+using API.Handlers;
+using API.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -9,7 +10,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Processors.HTTP;
+namespace API.Processors.HTTP;
 internal static class ResponseProcessor
 {
     internal static void ProcessRequest(ref Span<byte> requestContext, Stream response, SQLiteConnection sqLiteConnection)

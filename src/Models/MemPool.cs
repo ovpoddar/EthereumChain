@@ -1,5 +1,5 @@
-﻿using Nethereum.Model;
-using src.Helpers;
+﻿using API.Helpers;
+using Nethereum.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace src.Models;
+namespace API.Models;
 internal class MemPool
 {
     public Guid Identity { get; }
@@ -28,16 +28,16 @@ internal class MemPool
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
         // todo: replace with custom implementation
-        var transactionDetails = (SignedLegacyTransaction)TransactionFactory.CreateTransaction(transaction.ToArray());
-        this.Nonce = Encoding.UTF8.GetString(transactionDetails.Nonce);
-        this.GasPrice = Encoding.UTF8.GetString(transactionDetails.GasPrice);
-        this.GasLimit = Encoding.UTF8.GetString(transactionDetails.GasLimit);
-        this.To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
-        this.Value = Encoding.UTF8.GetString(transactionDetails.Value);
-        this.Data = Encoding.UTF8.GetString(transactionDetails.Data);
-        this.V = Encoding.UTF8.GetString(transactionDetails.Signature.V);
-        this.R = Encoding.UTF8.GetString(transactionDetails.Signature.R);
-        this.S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
+        var transactionDetails = (SignedLegacyTransaction)TransactionFactory.CreateTransaction(decimalArray.ToArray());
+        Nonce = Encoding.UTF8.GetString(transactionDetails.Nonce);
+        GasPrice = Encoding.UTF8.GetString(transactionDetails.GasPrice);
+        GasLimit = Encoding.UTF8.GetString(transactionDetails.GasLimit);
+        To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
+        Value = Encoding.UTF8.GetString(transactionDetails.Value);
+        Data = Encoding.UTF8.GetString(transactionDetails.Data);
+        V = Encoding.UTF8.GetString(transactionDetails.Signature.V);
+        R = Encoding.UTF8.GetString(transactionDetails.Signature.R);
+        S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
     }
 
     internal byte[] IdentifierAsHex() =>

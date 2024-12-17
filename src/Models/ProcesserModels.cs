@@ -6,5 +6,5 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace src.Models;
+namespace API.Models;
 internal record ProcesserModels(HttpListener Listener, SQLiteConnection SQLiteConnection);

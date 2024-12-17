@@ -1,4 +1,4 @@
-﻿using src.Handlers;
+﻿using API.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace src.Processors.HTTP;
+namespace API.Processors.HTTP;
 internal static class RequestProcessor
 {
     const string METHOD = "POST";

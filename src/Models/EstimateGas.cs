@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace src.Models;
+namespace API.Models;
 internal struct EstimateGas
 {
     public string? From { get; set; }
