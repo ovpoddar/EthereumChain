@@ -27,7 +27,7 @@ internal class MemPool
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
-        // todo: replace with custom implementation
+        // TODO: replace with custom implementation
         var transactionDetails = (SignedLegacyTransaction)TransactionFactory.CreateTransaction(decimalArray.ToArray());
         Nonce = Encoding.UTF8.GetString(transactionDetails.Nonce);
         GasPrice = Encoding.UTF8.GetString(transactionDetails.GasPrice);

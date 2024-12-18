@@ -43,7 +43,7 @@ internal static class RequestHandler
             processCommand.Parameters.AddWithValue("@V", memPoolTransaction.V);
             processCommand.Parameters.AddWithValue("@R", memPoolTransaction.R);
             processCommand.Parameters.AddWithValue("@S", memPoolTransaction.S);
-            var c = processCommand.ExecuteNonQuery();
+            processCommand.ExecuteNonQuery();
             return new ReadOnlySpan<byte>(memPoolTransaction.IdentifierAsHex());
         }
         finally
