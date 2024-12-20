@@ -5,7 +5,7 @@ VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "src\API\API.csproj", "{9E66382E-0BBD-40B6-95EA-3E62F2E6BAB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miner", "src\Miner\Miner\Miner.csproj", "{4C8B5235-C725-442F-B5FE-54266299A259}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miner", "src\Miner\Miner.csproj", "{911B6F42-1464-4B2E-B268-4386D40C14BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{9E66382E-0BBD-40B6-95EA-3E62F2E6BAB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E66382E-0BBD-40B6-95EA-3E62F2E6BAB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E66382E-0BBD-40B6-95EA-3E62F2E6BAB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4C8B5235-C725-442F-B5FE-54266299A259}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4C8B5235-C725-442F-B5FE-54266299A259}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4C8B5235-C725-442F-B5FE-54266299A259}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4C8B5235-C725-442F-B5FE-54266299A259}.Release|Any CPU.Build.0 = Release|Any CPU
+		{911B6F42-1464-4B2E-B268-4386D40C14BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{911B6F42-1464-4B2E-B268-4386D40C14BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{911B6F42-1464-4B2E-B268-4386D40C14BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{911B6F42-1464-4B2E-B268-4386D40C14BB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
