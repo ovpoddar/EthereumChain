@@ -54,6 +54,6 @@ internal static class RequestHandler
     {
         var memPoolTransaction = new MemPool(requestContext[1..^1]);
         memPoolTransaction.ShareToMemPool(sqLiteConnection);
-        return new ReadOnlySpan<byte>(memPoolTransaction.IdentifierAsHex());
+        return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(memPoolTransaction.Identity));
     }
 }
