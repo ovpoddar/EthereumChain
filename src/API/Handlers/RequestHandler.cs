@@ -1,5 +1,5 @@
 ﻿using API.Models;
-using src.Models;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;

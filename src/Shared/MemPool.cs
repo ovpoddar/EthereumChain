@@ -1,4 +1,4 @@
-﻿using API.Helpers;
+﻿using Shared.Helpers;
 using Nethereum.Model;
 using System;
 using System.Collections.Generic;
@@ -7,9 +7,13 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Runtime.CompilerServices;
+using System.Numerics;
+using System.Diagnostics;
+using Newtonsoft.Json.Linq;
 
-namespace API.Models;
-internal class MemPool
+namespace Shared;
+public class MemPool
 {
     public Guid Identity { get; }
     public string Nonce { get; }
@@ -21,7 +25,7 @@ internal class MemPool
     public string V { get; }
     public string R { get; }
     public string S { get; }
-    internal MemPool(Span<byte> transaction)
+    public MemPool(Span<byte> transaction)
     {
         Identity = Guid.NewGuid();
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
@@ -34,12 +38,12 @@ internal class MemPool
         GasLimit = Encoding.UTF8.GetString(transactionDetails.GasLimit);
         To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
         Value = Encoding.UTF8.GetString(transactionDetails.Value);
-        Data = Encoding.UTF8.GetString(transactionDetails.Data);
+        Data = Encoding.UTF8.GetString(transactionDetails.Data ?? []);
         V = Encoding.UTF8.GetString(transactionDetails.Signature.V);
         R = Encoding.UTF8.GetString(transactionDetails.Signature.R);
         S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
     }
 
-    internal byte[] IdentifierAsHex() =>
+    public byte[] IdentifierAsHex() =>
         Identity.ToByteArray();
 }
