@@ -19,8 +19,8 @@ public class MemPool
     private readonly ulong _gasPrice;
     private readonly ulong _gasLimit;
     private readonly ulong _value;
-
-    public Guid Identity { get; }
+    private readonly Guid _identity;
+    public string Identity { get => _identity.ToString("X"); }
     public string Nonce { get; }
     public string GasPrice { get => _gasPrice.ToString("x"); }
     public string GasLimit { get => _gasLimit.ToString("X"); }
@@ -32,7 +32,7 @@ public class MemPool
     public string S { get; }
     public MemPool(Span<byte> transaction)
     {
-        Identity = Guid.NewGuid();
+        _identity = Guid.NewGuid();
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
@@ -49,9 +49,6 @@ public class MemPool
         S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
     }
 
-    public byte[] IdentifierAsHex() =>
-        Identity.ToByteArray();
-
     public void ShareToMemPool(SQLiteConnection sqLiteConnection)
     {
         try
@@ -63,7 +60,7 @@ public class MemPool
                 values (@Id, @Nonce, @GasPrice, @GasLimit, @ToVal, @ValueVal, @Data, @V, @R, @S);
                 """, sqLiteConnection);
 
-            processCommand.Parameters.AddWithValue("@Id", Identity);
+            processCommand.Parameters.AddWithValue("@Id", _identity);
             processCommand.Parameters.AddWithValue("@Nonce", Nonce);
             processCommand.Parameters.AddWithValue("@GasPrice", _gasPrice);
             processCommand.Parameters.AddWithValue("@GasLimit", _gasLimit);

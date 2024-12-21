@@ -17,7 +17,7 @@ internal static class StructureProcesser
 
         using var transactionCommand = new SQLiteCommand("""
             CREATE TABLE IF NOT EXISTS [MemPool] (
-                [Id] VARCHAR(100),
+                [Id] TEXT,
                 [Nonce] VARCHAR(100),
                 [GasPrice] INTEGER,
                 [GasLimit] INTEGER,
