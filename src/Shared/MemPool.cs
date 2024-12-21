@@ -16,12 +16,15 @@ using System.Data.SQLite;
 namespace Shared;
 public class MemPool
 {
+    private readonly ulong _gasPrice;
+    private readonly ulong _gasLimit;
+    private readonly ulong _value;
+
     public Guid Identity { get; }
     public string Nonce { get; }
-    public string GasPrice { get; }
-    public string GasLimit { get; }
+    public string GasPrice { get => _gasPrice.ToString("x"); }
+    public string GasLimit { get => _gasLimit.ToString("X"); }
     public string To { get; }
-    private ulong _value;
     public string Value { get => _value.ToString("x"); }
     public string Data { get; }
     public string V { get; }
@@ -36,8 +39,8 @@ public class MemPool
         // TODO: replace with custom implementation
         var transactionDetails = (SignedLegacyTransaction)TransactionFactory.CreateTransaction(decimalArray.ToArray());
         Nonce = Encoding.UTF8.GetString(transactionDetails.Nonce);
-        GasPrice = Encoding.UTF8.GetString(transactionDetails.GasPrice);
-        GasLimit = Encoding.UTF8.GetString(transactionDetails.GasLimit);
+        _gasPrice = Utilities.GetLongFromHexArray(transactionDetails.GasPrice);
+        _gasLimit = Utilities.GetLongFromHexArray(transactionDetails.GasLimit);
         To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
         _value = Utilities.GetLongFromHexArray(transactionDetails.Value);
         Data = Encoding.UTF8.GetString(transactionDetails.Data ?? []);
@@ -62,8 +65,8 @@ public class MemPool
 
             processCommand.Parameters.AddWithValue("@Id", Identity);
             processCommand.Parameters.AddWithValue("@Nonce", Nonce);
-            processCommand.Parameters.AddWithValue("@GasPrice", GasPrice);
-            processCommand.Parameters.AddWithValue("@GasLimit", GasLimit);
+            processCommand.Parameters.AddWithValue("@GasPrice", _gasPrice);
+            processCommand.Parameters.AddWithValue("@GasLimit", _gasLimit);
             processCommand.Parameters.AddWithValue("@ToVal", To);
             processCommand.Parameters.AddWithValue("@ValueVal", _value);
             processCommand.Parameters.AddWithValue("@Data", Data);

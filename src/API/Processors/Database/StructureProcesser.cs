@@ -19,8 +19,8 @@ internal static class StructureProcesser
             CREATE TABLE IF NOT EXISTS [MemPool] (
                 [Id] VARCHAR(100),
                 [Nonce] VARCHAR(100),
-                [GasPrice] VARCHAR(150),
-                [GasLimit] VARCHAR(50),
+                [GasPrice] INTEGER,
+                [GasLimit] INTEGER,
                 [To] VARCHAR(250),
                 [Value] INTEGER,
                 [Data] VARCHAR(1000),

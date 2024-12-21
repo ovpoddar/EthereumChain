@@ -58,28 +58,13 @@ internal static class Utilities
 
     public static ulong GetLongFromHexArray(ReadOnlySpan<byte> hexArray)
     {
-        Debug.Assert(hexArray.Length == 8);
+        Debug.Assert(hexArray.Length <= 8);
 
         ulong result = 0;
         foreach (var b in hexArray)
-        {
-            byte upperNibble = (byte)(b >> 4);
-            if (upperNibble <= 9)
-                upperNibble += (byte)'0';
-            else
-                upperNibble += (byte)('A' - 10);
-
-            result = (result << 4) + (ulong)(upperNibble > '9' ? upperNibble - 'A' + 10 : upperNibble - '0');
-
-            byte lowerNibble = (byte)(b & 0xF);
-            if (lowerNibble <= 9)
-                lowerNibble += (byte)'0';
-            else
-                lowerNibble += (byte)('A' - 10);
-
-            result = (result << 4) + (ulong)(lowerNibble > '9' ? lowerNibble - 'A' + 10 : lowerNibble - '0');
-        }
-
+            result = (result << 8)
+                   + ((ulong)(b >> 4) * 16)
+                   + (ulong)(b & 0xF);
         return result;
     }
 
