@@ -6,9 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-	<ItemGroup>
-		<!--remove this dependence with custom implementation-->
-		<PackageReference Include="Nethereum.Hex" Version="4.26.0" />
-		<PackageReference Include="Nethereum.Web3" Version="4.26.0" />
-	</ItemGroup>
+  <ItemGroup>
+	<PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
+	<!--remove this dependence with custom implementation-->
+	<PackageReference Include="Nethereum.Hex" Version="4.26.0" />
+	<PackageReference Include="Nethereum.Web3" Version="4.26.0" />
+  </ItemGroup>
 </Project>

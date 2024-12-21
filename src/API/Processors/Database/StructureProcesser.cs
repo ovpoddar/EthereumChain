@@ -22,7 +22,7 @@ internal static class StructureProcesser
                 [GasPrice] VARCHAR(150),
                 [GasLimit] VARCHAR(50),
                 [To] VARCHAR(250),
-                [Value] VARCHAR(200),
+                [Value] INTEGER,
                 [Data] VARCHAR(1000),
                 [V] VARCHAR(50),
                 [R] VARCHAR(50),

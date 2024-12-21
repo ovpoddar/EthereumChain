@@ -56,7 +56,34 @@ internal static class Utilities
     }
 
 
-    public static ulong GetLongFromHexArray(Span<byte> hexArray)
+    public static ulong GetLongFromHexArray(ReadOnlySpan<byte> hexArray)
+    {
+        Debug.Assert(hexArray.Length == 8);
+
+        ulong result = 0;
+        foreach (var b in hexArray)
+        {
+            byte upperNibble = (byte)(b >> 4);
+            if (upperNibble <= 9)
+                upperNibble += (byte)'0';
+            else
+                upperNibble += (byte)('A' - 10);
+
+            result = (result << 4) + (ulong)(upperNibble > '9' ? upperNibble - 'A' + 10 : upperNibble - '0');
+
+            byte lowerNibble = (byte)(b & 0xF);
+            if (lowerNibble <= 9)
+                lowerNibble += (byte)'0';
+            else
+                lowerNibble += (byte)('A' - 10);
+
+            result = (result << 4) + (ulong)(lowerNibble > '9' ? lowerNibble - 'A' + 10 : lowerNibble - '0');
+        }
+
+        return result;
+    }
+
+    public static void ConvertHexValuesTobyte(Span<byte> hexArray)
     {
         Debug.Assert(hexArray.Length == 8);
         Span<byte> normalArray = stackalloc byte[hexArray.Length * 2];
@@ -70,23 +97,7 @@ internal static class Utilities
             normalArray[j++] = ToUpper(b >> 4);
             normalArray[j++] = ToUpper(b);
         }
-        ulong result = 0;
-
-        foreach (var item in normalArray)
-        {
-            uint x = item;
-
-            if (x >= '0' && x <= '9') x = x - '0';
-            else if (x >= 'A' && x <= 'F') x = (x - 'A') + 10;
-            else if (x >= 'a' && x <= 'f') x = (x - 'a') + 10;
-            else throw new ArgumentOutOfRangeException("hex");
-
-            result = 16 * result + x;
-        }
-        return result;
-
     }
-
     static byte ToUpper(int value)
     {
         value &= 0xF;

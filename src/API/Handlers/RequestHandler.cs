@@ -50,5 +50,10 @@ internal static class RequestHandler
         {
             sqLiteConnection.Close();
         }
+    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    {
+        var memPoolTransaction = new MemPool(requestContext[1..^1]);
+        memPoolTransaction.ShareToMemPool(sqLiteConnection);
+        return new ReadOnlySpan<byte>(memPoolTransaction.IdentifierAsHex());
     }
 }
