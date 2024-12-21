@@ -73,7 +73,8 @@ public class MemPool
             processCommand.Parameters.AddWithValue("@V", V);
             processCommand.Parameters.AddWithValue("@R", R);
             processCommand.Parameters.AddWithValue("@S", S);
-            processCommand.ExecuteNonQuery();
+            var responce = processCommand.ExecuteNonQuery();
+            Debug.Assert(responce != 0);
         }
         finally
         {
