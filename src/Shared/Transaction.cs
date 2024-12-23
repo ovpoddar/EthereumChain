@@ -14,13 +14,13 @@ using Newtonsoft.Json.Linq;
 using System.Data.SQLite;
 
 namespace Shared;
-public class MemPool
+public class Transaction
 {
     private readonly ulong _gasPrice;
     private readonly ulong _gasLimit;
     private readonly ulong _value;
-    private readonly Guid _identity;
-    public string Identity { get => _identity.ToString("X"); }
+    private readonly Guid _id;
+    public string Id { get => _id.ToString("X"); }
     public string Nonce { get; }
     public string GasPrice { get => _gasPrice.ToString("x"); }
     public string GasLimit { get => _gasLimit.ToString("X"); }
@@ -30,9 +30,9 @@ public class MemPool
     public string V { get; }
     public string R { get; }
     public string S { get; }
-    public MemPool(Span<byte> transaction)
+    public Transaction(Guid id, Span<byte> transaction)
     {
-        _identity = Guid.NewGuid();
+        _id = id;
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
@@ -49,33 +49,4 @@ public class MemPool
         S = Encoding.UTF8.GetString(transactionDetails.Signature.S);
     }
 
-    public void ShareToMemPool(SQLiteConnection sqLiteConnection)
-    {
-        try
-        {
-            sqLiteConnection.Open();
-
-            using var processCommand = new SQLiteCommand("""
-                insert into MemPool (Id, Nonce, GasPrice, GasLimit, "To", "Value", Data, V, R, S)
-                values (@Id, @Nonce, @GasPrice, @GasLimit, @ToVal, @ValueVal, @Data, @V, @R, @S);
-                """, sqLiteConnection);
-
-            processCommand.Parameters.AddWithValue("@Id", _identity);
-            processCommand.Parameters.AddWithValue("@Nonce", Nonce);
-            processCommand.Parameters.AddWithValue("@GasPrice", _gasPrice);
-            processCommand.Parameters.AddWithValue("@GasLimit", _gasLimit);
-            processCommand.Parameters.AddWithValue("@ToVal", To);
-            processCommand.Parameters.AddWithValue("@ValueVal", _value);
-            processCommand.Parameters.AddWithValue("@Data", Data);
-            processCommand.Parameters.AddWithValue("@V", V);
-            processCommand.Parameters.AddWithValue("@R", R);
-            processCommand.Parameters.AddWithValue("@S", S);
-            var responce = processCommand.ExecuteNonQuery();
-            Debug.Assert(responce != 0);
-        }
-        finally
-        {
-            sqLiteConnection.Close();
-        }
-    }
 }

@@ -26,34 +26,24 @@ internal static class RequestHandler
         try
         {
             sqLiteConnection.Open();
-            var memPoolTransaction = new MemPool(requestContext[1..^1]);
 
             using var processCommand = new SQLiteCommand("""
-                insert into MemPool (Id, Nonce, GasPrice, GasLimit, "To", "Value", Data, V, R, S)
-                values (@Id, @Nonce, @GasPrice, @GasLimit, @ToVal, @ValueVal, @Data, @V, @R, @S);
+                insert into MemPool (Id, RawTransaction)
+                values (@Id, @RawTransaction);
                 """, sqLiteConnection);
+            var transactionId = Guid.NewGuid();
+            processCommand.Parameters.AddWithValue("@Id", transactionId);
+            processCommand.Parameters.AddWithValue("@RawTransaction", Encoding.UTF8.GetString(requestContext[1..^1]));
 
-            processCommand.Parameters.AddWithValue("@Id", memPoolTransaction.Identity);
-            processCommand.Parameters.AddWithValue("@Nonce", memPoolTransaction.Nonce);
-            processCommand.Parameters.AddWithValue("@GasPrice", memPoolTransaction.GasPrice);
-            processCommand.Parameters.AddWithValue("@GasLimit", memPoolTransaction.GasLimit);
-            processCommand.Parameters.AddWithValue("@ToVal", memPoolTransaction.To);
-            processCommand.Parameters.AddWithValue("@ValueVal", memPoolTransaction.Value);
-            processCommand.Parameters.AddWithValue("@Data", memPoolTransaction.Data);
-            processCommand.Parameters.AddWithValue("@V", memPoolTransaction.V);
-            processCommand.Parameters.AddWithValue("@R", memPoolTransaction.R);
-            processCommand.Parameters.AddWithValue("@S", memPoolTransaction.S);
-            processCommand.ExecuteNonQuery();
-            return new ReadOnlySpan<byte>(memPoolTransaction.IdentifierAsHex());
+            var response = processCommand.ExecuteNonQuery();
+            Debug.Assert(response != 0);
+            // TODO: also share to other nodes.
+
+            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
         }
         finally
         {
             sqLiteConnection.Close();
         }
-    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
-    {
-        var memPoolTransaction = new MemPool(requestContext[1..^1]);
-        memPoolTransaction.ShareToMemPool(sqLiteConnection);
-        return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(memPoolTransaction.Identity));
     }
 }
