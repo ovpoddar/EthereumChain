@@ -8,17 +8,19 @@ using API.Models;
 using API.Processors.HTTP;
 using API;
 using API.Handlers;
-
-const int LISTENERPORT = 9546;
+using System.Net.WebSockets;
+using API.Processors.WebSocket;
 
 using (var sqlConnection = InitializedDatabase())
+using (var minerListener = new WebSocketServer(IPAddress.Any, Setting.MinerListenerPort))
 using (var listener = new HttpListener())
 {
-    listener.Prefixes.Add($"http://localhost:{LISTENERPORT}/");
-    listener.Prefixes.Add($"http://127.0.0.1:{LISTENERPORT}/");
+    listener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
+    listener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
     listener.Start();
+    minerListener.ListenForClients();
     foreach (var item in listener.Prefixes)
-        Console.WriteLine($"application is listening on {item}");
+        Console.WriteLine($"RPC Application is listening on {item}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
     listener.BeginGetContext(ReceivedRequest, new ProcesserModels(listener, sqlConnection));
