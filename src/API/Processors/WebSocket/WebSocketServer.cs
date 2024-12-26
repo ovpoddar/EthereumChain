@@ -21,7 +21,7 @@ public class WebSocketServer : IDisposable
         _socket.Bind(new IPEndPoint(address, port));
         _socket.Listen(50);
         var listeningPort = (IPEndPoint?)_socket.LocalEndPoint ?? throw new Exception("Unexpected behavior: Some thing went wrong. expecting the port.");
-        Console.WriteLine($"Miner application listening on {listeningPort.Port}");
+        Console.WriteLine($"Miner application listening on {_socket.LocalEndPoint}");
         Debug.Assert(listeningPort.Port == port);
     }
 
