@@ -17,6 +17,7 @@ public class WebSocketServer : IDisposable
     private readonly TcpListener _socket;
     private bool disposedValue;
     private Action? _blockGenerated = null;
+    private Action? _connectionClose = null;
 
     public WebSocketServer(IPAddress address, int port)
     {
@@ -91,6 +92,14 @@ public class WebSocketServer : IDisposable
 
                     for (ulong i = 0; i < msglen; ++i)
                         decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+
+                    if (decoded.Length == 2 && decoded[0] == 3 && decoded[1] == 232)
+                    {
+                        clientSocket.Dispose();
+                        if (_connectionClose != null)
+                            _connectionClose();
+                        return;
+                    }
 
                     string text = Encoding.UTF8.GetString(decoded);
 
