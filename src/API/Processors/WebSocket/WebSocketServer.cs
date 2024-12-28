@@ -1,7 +1,9 @@
 ﻿using Nethereum.Contracts.Standards.ERC1155.ContractDefinition;
+using Nethereum.JsonRpc.Client;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,33 +13,29 @@ using System.Text;
 namespace API.Processors.WebSocket;
 public class WebSocketServer : IDisposable
 {
-    private readonly Socket _socket;
+    private readonly TcpListener _socket;
     private bool disposedValue;
 
     public WebSocketServer(IPAddress address, int port)
     {
-        _socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.IP);
-        _socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
-        _socket.Bind(new IPEndPoint(address, port));
-        _socket.Listen(50);
-        var listeningPort = (IPEndPoint?)_socket.LocalEndPoint ?? throw new Exception("Unexpected behavior: Some thing went wrong. expecting the port.");
-        Console.WriteLine($"Miner application listening on {_socket.LocalEndPoint}");
+        _socket = new(new IPEndPoint(address, port));
+        _socket.Start();
+        var listeningPort = (IPEndPoint?)_socket.LocalEndpoint ?? throw new Exception("Unexpected behavior: Some thing went wrong. expecting the port.");
+        Console.WriteLine($"Miner application listening on {_socket.LocalEndpoint}");
         Debug.Assert(listeningPort.Port == port);
     }
 
     public void ListenForClients() =>
-        _socket.BeginAccept(BeginAccept, _socket);
+        _socket.BeginAcceptTcpClient(AcceptConnection, null);
 
-    private void BeginAccept(IAsyncResult asyncResult)
+    private void AcceptConnection(IAsyncResult ar)
     {
-        if (asyncResult.AsyncState is not Socket serverSocket)
-            return;
-        var clientSocket = serverSocket.EndAccept(asyncResult);
+        var clientSocket = _socket.EndAcceptTcpClient(ar);
         try
         {
-            clientSocket.Blocking = true;
-            var buffers = new byte[1024];
-            clientSocket.BeginReceive(buffers, 0, buffers.Length, SocketFlags.None, Receving, new DTO(buffers, clientSocket));
+            var clientStream = clientSocket.GetStream();
+            var bytes = new byte[1024];
+            clientSocket.GetStream().BeginRead(bytes, 0, bytes.Length, BeginHandling, (bytes, clientSocket));
         }
         catch
         {
@@ -47,32 +45,73 @@ public class WebSocketServer : IDisposable
                 clientSocket.Dispose();
             }
         }
-        finally
-        {
-            serverSocket.BeginAccept(BeginAccept, serverSocket);
-        }
     }
 
-    private void Receving(IAsyncResult asyncResult)
+    private void BeginHandling(IAsyncResult ar)
     {
-        var received = asyncResult.AsyncState as DTO;
-        if (received == null)
+        if (ar.AsyncState is not (byte[] bytes, TcpClient clientSocket))
             return;
-        var totalReceived = received.socket.EndReceive(asyncResult);
-        var request = Encoding.UTF8.GetString(received.data, 0, totalReceived);
-        MakeHandShake(received.socket, request);
-        Console.WriteLine("Connection open");
-    }
 
+        var totalReceived = clientSocket.GetStream().EndRead(ar);
+        var request = Encoding.UTF8.GetString(bytes, 0, totalReceived);
+        MakeHandShake(clientSocket.GetStream(), request, () =>
+        {
+            while (true)
+            {
+                while (!clientSocket.GetStream().DataAvailable) ;
+                while (clientSocket.Available < 3) ;
+                clientSocket.GetStream().ReadExactly(bytes, 0, clientSocket.Available);
+                bool fin = (bytes[0] & 0b10000000) != 0, mask = (bytes[1] & 0b10000000) != 0;
+                int opcode = bytes[0] & 0b00001111;
+                ulong offset = 2,
+                      msglen = bytes[1] & (ulong)0b01111111;
+
+                switch (msglen)
+                {
+                    case 126:
+                        msglen = BitConverter.ToUInt16([bytes[3], bytes[2]], 0);
+                        offset = 4;
+                        break;
+                    case 127:
+                        msglen = BitConverter.ToUInt64([bytes[9], bytes[8], bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2]], 0);
+                        offset = 10;
+                        break;
+                }
+
+                if (mask)
+                {
+                    byte[] decoded = new byte[msglen];
+                    byte[] masks = [bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]];
+                    offset += 4;
+
+                    for (ulong i = 0; i < msglen; ++i)
+                        decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
+
+                    string text = Encoding.UTF8.GetString(decoded);
+                    Console.WriteLine("{0}", text);
+                }
+                // TODO: close connection when asked for.
+            }
+        });
+
+
+
+    }
 
     string? GetAcceptKey(ReadOnlySpan<char> buffer)
     {
         const string GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
         const string KeyHeader = "Sec-WebSocket-Key:";
-        var start = buffer.IndexOf(KeyHeader.AsSpan()) != -1 ? buffer.IndexOf(KeyHeader.AsSpan()) + KeyHeader.Length : throw new Exception("the header is not valid");
+        int start = buffer.IndexOf(KeyHeader.AsSpan());
+        if (start == -1)
+            return null;
+        start += KeyHeader.Length;
+
         var end = buffer.Slice(start).IndexOf("\r\n".AsSpan());
+        if (end == -1)
+            return null;
+
         var keySpan = buffer.Slice(start, end).Trim();
-        Console.WriteLine(keySpan.ToString());
         var combined = $"{keySpan.ToString()}{GUID}";
         Span<byte> combinedBytes = stackalloc byte[Encoding.UTF8.GetByteCount(combined)];
         Encoding.UTF8.GetBytes(combined, combinedBytes);
@@ -81,27 +120,17 @@ public class WebSocketServer : IDisposable
         return Convert.ToBase64String(hash);
     }
 
-    void MakeHandShake(Socket connection, ReadOnlySpan<char> buffer)
+    void MakeHandShake(NetworkStream connection, ReadOnlySpan<char> buffer, Action afterConnected)
     {
         try
         {
             var acceptKey = GetAcceptKey(buffer);
-            using var s = new NetworkStream(connection);
-            var responce = Encoding.UTF8.GetBytes($"HTTP/1.1 101 Switching Protocols\r\nUpgrade: web socket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {acceptKey}\r\n\r\n");
-            Send(s,
-                responce,
-                () =>
-                {
-                    //connection.Send("Hello world"u8);
-                    Console.WriteLine("opened Connection");
-                    var read = new byte[1024];
-                    connection.BeginReceive(read, 0, read.Length, SocketFlags.None, GettingData, new DTO(read, connection));
-                },
-                (e) =>
-                {
-                    Console.WriteLine(e.Message);
-                });
-            s.Flush();
+            if (acceptKey == null) return;
+            var response = Encoding.UTF8.GetBytes($"HTTP/1.1 101 Switching Protocols\r\nUpgrade: web Client\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {acceptKey}\r\n\r\n");
+            Send(connection, response, afterConnected, (e) =>
+            {
+                Console.WriteLine("proocol exchange fail");
+            });
         }
         catch (Exception e)
         {
@@ -109,18 +138,7 @@ public class WebSocketServer : IDisposable
         }
     }
 
-    private void GettingData(IAsyncResult asyncResult)
-    {
-        var received = asyncResult.AsyncState as DTO;
-        if (received == null)
-            return;
-        var totalReceived = received.socket.EndReceive(asyncResult);
-        Console.WriteLine(totalReceived);
-        Console.WriteLine(Encoding.UTF8.GetString(received.data, 0, totalReceived));
-        received.socket.BeginReceive(received.data, 0, received.data.Length, SocketFlags.None, GettingData, received);
-    }
-
-    public Task Send(Stream stream, byte[] buffer, Action callback, Action<Exception> error)
+    public static Task? Send(NetworkStream stream, byte[] buffer, Action callback, Action<Exception> error)
     {
         try
         {
@@ -147,18 +165,16 @@ public class WebSocketServer : IDisposable
         {
             if (disposing)
             {
-                _socket.Close();
+                _socket.Dispose();
             }
             _socket.Dispose();
             disposedValue = true;
         }
     }
-   
+
     public void Dispose()
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
 }
-
-file record DTO(byte[] data, Socket socket);
