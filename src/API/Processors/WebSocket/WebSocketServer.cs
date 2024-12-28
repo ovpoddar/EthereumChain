@@ -1,6 +1,7 @@
 ﻿using Nethereum.Contracts.Standards.ERC1155.ContractDefinition;
 using Nethereum.JsonRpc.Client;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Crypto.Tls;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -89,6 +90,7 @@ public class WebSocketServer : IDisposable
 
                     string text = Encoding.UTF8.GetString(decoded);
                     Console.WriteLine("{0}", text);
+                    FrameData(clientSocket, Encoding.UTF8.GetBytes("Hellow world"));
                 }
                 // TODO: close connection when asked for.
             }
@@ -138,7 +140,7 @@ public class WebSocketServer : IDisposable
         }
     }
 
-    public static Task? Send(NetworkStream stream, byte[] buffer, Action callback, Action<Exception> error)
+    Task? Send(NetworkStream stream, byte[] buffer, Action callback, Action<Exception> error)
     {
         try
         {
@@ -157,6 +159,31 @@ public class WebSocketServer : IDisposable
             error(e);
             return null;
         }
+    }
+
+    public static void FrameData(TcpClient connection, byte[] payload)
+    {
+        byte op = 129;
+
+        connection.GetStream().WriteByte(op);
+
+        if (payload.Length > UInt16.MaxValue)
+        {
+            connection.GetStream().WriteByte(127);
+            var lengthBytes = BitConverter.GetBytes((ulong)payload.Length);
+            connection.GetStream().Write(lengthBytes, 0, lengthBytes.Length);
+        }
+        else if (payload.Length > 125)
+        {
+            connection.GetStream().WriteByte(126);
+            var lengthBytes = BitConverter.GetBytes((ushort)payload.Length);
+            connection.GetStream().Write(lengthBytes, 0, lengthBytes.Length);
+        }
+        else
+        {
+            connection.GetStream().WriteByte((byte)payload.Length);
+        }
+        connection.GetStream().Write(payload, 0, payload.Length);
     }
 
     protected virtual void Dispose(bool disposing)
