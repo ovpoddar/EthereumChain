@@ -16,18 +16,22 @@ public class WebSocketServer : IDisposable
 {
     private readonly TcpListener _socket;
     private bool disposedValue;
+    private Action? _blockGenerated = null;
 
     public WebSocketServer(IPAddress address, int port)
     {
         _socket = new(new IPEndPoint(address, port));
         _socket.Start();
         var listeningPort = (IPEndPoint?)_socket.LocalEndpoint ?? throw new Exception("Unexpected behavior: Some thing went wrong. expecting the port.");
-        Console.WriteLine($"Miner application listening on {_socket.LocalEndpoint}");
+        Console.WriteLine($"Miner application listening on ws://{_socket.LocalEndpoint}");
         Debug.Assert(listeningPort.Port == port);
     }
 
-    public void ListenForClients() =>
+    public void ListenForClients(Action blockGenerated)
+    {
+        _blockGenerated = blockGenerated;
         _socket.BeginAcceptTcpClient(AcceptConnection, null);
+    }
 
     private void AcceptConnection(IAsyncResult ar)
     {
@@ -89,6 +93,10 @@ public class WebSocketServer : IDisposable
                         decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
 
                     string text = Encoding.UTF8.GetString(decoded);
+
+                    if (text == "hi" && _blockGenerated != null)
+                        _blockGenerated();
+
                     Console.WriteLine("{0}", text);
                     FrameData(clientSocket, Encoding.UTF8.GetBytes("Hellow world"));
                 }

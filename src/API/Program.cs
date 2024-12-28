@@ -12,19 +12,24 @@ using System.Net.WebSockets;
 using API.Processors.WebSocket;
 
 using (var sqlConnection = InitializedDatabase())
-using (var minerListener = new WebSocketServer(IPAddress.Any, Setting.MinerListenerPort))
+using (var minerListener = new WebSocketServer(IPAddress.Parse("127.0.0.1"), Setting.MinerListenerPort))
 using (var listener = new HttpListener())
 {
     listener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     listener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
     listener.Start();
-    minerListener.ListenForClients();
+    minerListener.ListenForClients(GeneratedBlock);
     foreach (var item in listener.Prefixes)
         Console.WriteLine($"RPC Application is listening on {item}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
     listener.BeginGetContext(ReceivedRequest, new ProcesserModels(listener, sqlConnection));
     Console.ReadLine();
+}
+
+void GeneratedBlock()
+{
+    Console.WriteLine("Text");
 }
 
 static void ReceivedRequest(IAsyncResult ar)
