@@ -13,7 +13,6 @@ internal static class Setting
     private static readonly long GASPrice = 20000000000;
 
     public const int RPCPort = 9546;
-    public const int MinerListenerPort = 8081;
     public const int MinerNetworkCount = 20;
     public static readonly string WorkingRpcVersion = "\"2.0\"";
     public static readonly string EthereumChainStoragePath = "./storage.sqlite";

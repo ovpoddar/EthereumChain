@@ -7,4 +7,4 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace API.Models;
-internal record ProcesserModels(HttpListener Listener, SQLiteConnection SQLiteConnection);
+internal record ProcessorModel(HttpListener Listener, SQLiteConnection SQLiteConnection);

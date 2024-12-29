@@ -1,51 +1,49 @@
-﻿using System.Data.SQLite;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text;
-using API.Helpers;
-using API.Processors.Database;
-using API.Models;
-using API.Processors.HTTP;
-using API;
+﻿using API;
 using API.Handlers;
-using System.Net.WebSockets;
-using API.Processors.WebSocket;
+using API.Helpers;
+using API.Models;
+using API.Processors.Database;
+using HTTP = API.Processors.HTTP;
+using WebSocket = API.Processors.WebSocket;
+using System.Data.SQLite;
+using System.Net;
+using System.Net.Sockets;
 
+List<System.Net.WebSockets.WebSocket> minerConnections = new(Setting.MinerNetworkCount);
 using (var sqlConnection = InitializedDatabase())
-using (var minerListener = new WebSocketServer(IPAddress.Parse("127.0.0.1"), Setting.MinerListenerPort))
 using (var listener = new HttpListener())
 {
     listener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     listener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
     listener.Start();
-    minerListener.Start();
     foreach (var item in listener.Prefixes)
         Console.WriteLine($"RPC Application is listening on {item}");
+    Console.WriteLine($"Miner application listening on ws://http://127.0.0.1:{Setting.RPCPort}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
-    listener.BeginGetContext(ReceivedRequest, new ProcesserModels(listener, sqlConnection));
-    minerListener.BeginReceived(HandlingResponse);
+    listener.BeginGetContext(ReceivedRequest, new ProcessorModel(listener, sqlConnection));
     Console.ReadLine();
 }
 
-void GeneratedBlock()
+async void ReceivedRequest(IAsyncResult ar)
 {
-    Console.WriteLine("Text");
-}
-
-static void ReceivedRequest(IAsyncResult ar)
-{
-    if (ar.AsyncState is not ProcesserModels requestProcesser)
+    if (ar.AsyncState is not ProcessorModel requestProcesser)
         return;
 
     var context = requestProcesser.Listener.EndGetContext(ar);
+    if (WebSocket.RequestProcessor.CanProcessAsBlockChainResponce(context.Request.Headers))
+    {
+        await WebSocket.RequestProcessor.VerifyRequest(minerConnections, context);
+        requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
+        return;
+    }
     var requestLength = (int)context.Request.ContentLength64;
     Span<byte> requestContext = stackalloc byte[requestLength < 1024 ? requestLength : 1024];
     context.Request.InputStream.ReadExactly(requestContext);
 
-    ResponseProcessor.SetUpHeaders(context);
+    HTTP.ResponseProcessor.SetUpHeaders(context);
 
-    if (RequestProcessor.CanProcessAsBlockChainRequest(context.Request, ref requestContext))
+    if (HTTP.RequestProcessor.CanProcessAsBlockChainRequest(context.Request, ref requestContext))
     {
         context.Response.OutputStream.Write("{"u8);
 
@@ -61,7 +59,7 @@ static void ReceivedRequest(IAsyncResult ar)
             context.Response.OutputStream.Write(","u8);
         }
 
-        ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection);
+        HTTP.ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection);
 
         context.Response.OutputStream.Write("}"u8);
         context.Response.OutputStream.Close();
@@ -72,10 +70,6 @@ static void ReceivedRequest(IAsyncResult ar)
     context.Response.OutputStream.Write("hello World! it's listening"u8);
     context.Response.OutputStream.Close();
     requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
-}
-
-static void HandlingResponse(byte[] responce)
-{
 }
 
 static SQLiteConnection InitializedDatabase()
