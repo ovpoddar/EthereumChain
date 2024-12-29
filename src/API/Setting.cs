@@ -14,6 +14,7 @@ internal static class Setting
 
     public const int RPCPort = 9546;
     public const int MinerListenerPort = 8081;
+    public const int MinerNetworkCount = 20;
     public static readonly string WorkingRpcVersion = "\"2.0\"";
     public static readonly string EthereumChainStoragePath = "./storage.sqlite";
     public static readonly byte[] WorkingRpcVersionByte = Encoding.UTF8.GetBytes(WorkingRpcVersion);

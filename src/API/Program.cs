@@ -18,12 +18,13 @@ using (var listener = new HttpListener())
     listener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     listener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
     listener.Start();
-    minerListener.ListenForClients(GeneratedBlock);
+    minerListener.Start();
     foreach (var item in listener.Prefixes)
         Console.WriteLine($"RPC Application is listening on {item}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
     listener.BeginGetContext(ReceivedRequest, new ProcesserModels(listener, sqlConnection));
+    minerListener.BeginReceived(HandlingResponse);
     Console.ReadLine();
 }
 
@@ -71,6 +72,10 @@ static void ReceivedRequest(IAsyncResult ar)
     context.Response.OutputStream.Write("hello World! it's listening"u8);
     context.Response.OutputStream.Close();
     requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
+}
+
+static void HandlingResponse(byte[] responce)
+{
 }
 
 static SQLiteConnection InitializedDatabase()

@@ -14,10 +14,10 @@ using System.Text;
 namespace API.Processors.WebSocket;
 public class WebSocketServer : IDisposable
 {
+    public List<TcpClient> minerConnections;
+
     private readonly TcpListener _socket;
     private bool disposedValue;
-    private Action? _blockGenerated = null;
-    private Action? _connectionClose = null;
 
     public WebSocketServer(IPAddress address, int port)
     {
@@ -26,25 +26,28 @@ public class WebSocketServer : IDisposable
         var listeningPort = (IPEndPoint?)_socket.LocalEndpoint ?? throw new Exception("Unexpected behavior: Some thing went wrong. expecting the port.");
         Console.WriteLine($"Miner application listening on ws://{_socket.LocalEndpoint}");
         Debug.Assert(listeningPort.Port == port);
-    }
-
-    public void ListenForClients(Action blockGenerated)
-    {
-        _blockGenerated = blockGenerated;
-        _socket.BeginAcceptTcpClient(AcceptConnection, null);
+        minerConnections = new(Setting.MinerNetworkCount);
     }
 
     private void AcceptConnection(IAsyncResult ar)
     {
+        _socket.BeginAcceptTcpClient(AcceptConnection, null);
         var clientSocket = _socket.EndAcceptTcpClient(ar);
+        Console.WriteLine("Opening connection");
         try
         {
+            if (minerConnections.Count == Setting.MinerNetworkCount)
+                throw new Exception("connection full.");
+
+            minerConnections.Add(clientSocket);
             var clientStream = clientSocket.GetStream();
             var bytes = new byte[1024];
             clientSocket.GetStream().BeginRead(bytes, 0, bytes.Length, BeginHandling, (bytes, clientSocket));
         }
         catch
         {
+            if (minerConnections.Contains(clientSocket))
+                minerConnections.Remove(clientSocket);
             if (clientSocket != null)
             {
                 clientSocket.Close();
@@ -57,62 +60,71 @@ public class WebSocketServer : IDisposable
     {
         if (ar.AsyncState is not (byte[] bytes, TcpClient clientSocket))
             return;
-
-        var totalReceived = clientSocket.GetStream().EndRead(ar);
-        var request = Encoding.UTF8.GetString(bytes, 0, totalReceived);
-        MakeHandShake(clientSocket.GetStream(), request, () =>
+        try
         {
-            while (true)
+
+            var totalReceived = clientSocket.GetStream().EndRead(ar);
+            var request = Encoding.UTF8.GetString(bytes, 0, totalReceived);
+            MakeHandShake(clientSocket.GetStream(), request, () =>
             {
-                while (!clientSocket.GetStream().DataAvailable) ;
-                while (clientSocket.Available < 3) ;
-                clientSocket.GetStream().ReadExactly(bytes, 0, clientSocket.Available);
-                bool fin = (bytes[0] & 0b10000000) != 0, mask = (bytes[1] & 0b10000000) != 0;
-                int opcode = bytes[0] & 0b00001111;
-                ulong offset = 2,
-                      msglen = bytes[1] & (ulong)0b01111111;
 
-                switch (msglen)
+                clientSocket.GetStream().Flush();
+                while (true)
                 {
-                    case 126:
-                        msglen = BitConverter.ToUInt16([bytes[3], bytes[2]], 0);
-                        offset = 4;
-                        break;
-                    case 127:
-                        msglen = BitConverter.ToUInt64([bytes[9], bytes[8], bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2]], 0);
-                        offset = 10;
-                        break;
-                }
+                    while (!clientSocket.GetStream().DataAvailable) ;
+                    while (clientSocket.Available < 3) ;
+                    clientSocket.GetStream().ReadExactly(bytes, 0, clientSocket.Available);
+                    bool fin = (bytes[0] & 0b10000000) != 0, mask = (bytes[1] & 0b10000000) != 0;
+                    int opcode = bytes[0] & 0b00001111;
+                    ulong offset = 2,
+                          msglen = bytes[1] & (ulong)0b01111111;
 
-                if (mask)
-                {
-                    byte[] decoded = new byte[msglen];
-                    byte[] masks = [bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]];
-                    offset += 4;
-
-                    for (ulong i = 0; i < msglen; ++i)
-                        decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
-
-                    if (decoded.Length == 2 && decoded[0] == 3 && decoded[1] == 232)
+                    switch (msglen)
                     {
-                        clientSocket.Dispose();
-                        if (_connectionClose != null)
-                            _connectionClose();
-                        return;
+                        case 126:
+                            msglen = BitConverter.ToUInt16([bytes[3], bytes[2]], 0);
+                            offset = 4;
+                            break;
+                        case 127:
+                            msglen = BitConverter.ToUInt64([bytes[9], bytes[8], bytes[7], bytes[6], bytes[5], bytes[4], bytes[3], bytes[2]], 0);
+                            offset = 10;
+                            break;
                     }
 
-                    string text = Encoding.UTF8.GetString(decoded);
+                    if (mask)
+                    {
+                        byte[] decoded = new byte[msglen];
+                        byte[] masks = [bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]];
+                        offset += 4;
 
-                    if (text == "hi" && _blockGenerated != null)
-                        _blockGenerated();
+                        for (ulong i = 0; i < msglen; ++i)
+                            decoded[i] = (byte)(bytes[offset + i] ^ masks[i % 4]);
 
-                    Console.WriteLine("{0}", text);
-                    FrameData(clientSocket, Encoding.UTF8.GetBytes("Hellow world"));
+                        if (decoded.Length == 2 && decoded[0] == 3 && decoded[1] == 232)
+                        {
+                            Console.WriteLine("Closing connection");
+                            clientSocket.Dispose();
+                            minerConnections.Remove(clientSocket);
+                            return;
+                        }
+
+                        string text = Encoding.UTF8.GetString(decoded);
+
+                        Console.WriteLine("{0}", text);
+                        FrameData(clientSocket, Encoding.UTF8.GetBytes("Hellow world"));
+                    }
+                    // TODO: close connection when asked for.
                 }
-                // TODO: close connection when asked for.
-            }
-        });
+            });
 
+        }
+        catch
+        {
+            Console.WriteLine("Closing connection");
+            clientSocket.Dispose();
+            minerConnections.Remove(clientSocket);
+
+        }
 
 
     }
@@ -220,5 +232,12 @@ public class WebSocketServer : IDisposable
     {
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
+    }
+
+    public void Start() =>
+        _socket.BeginAcceptTcpClient(AcceptConnection, null);
+
+    public void BeginReceived(Delegate handlingResponse)
+    {
     }
 }
