@@ -4,12 +4,12 @@ using API.Helpers;
 using API.Models;
 using API.Processors.Database;
 using HTTP = API.Processors.HTTP;
-using WebSocket = API.Processors.WebSocket;
 using System.Data.SQLite;
 using System.Net;
 using System.Net.Sockets;
+using API.Processors.WebSocket;
 
-List<System.Net.WebSockets.WebSocket> minerConnections = new(Setting.MinerNetworkCount);
+List<MinerSocketProcessor> minerConnections = new(Setting.MinerNetworkCount);
 using (var sqlConnection = InitializedDatabase())
 using (var listener = new HttpListener())
 {
@@ -31,9 +31,9 @@ async void ReceivedRequest(IAsyncResult ar)
         return;
 
     var context = requestProcesser.Listener.EndGetContext(ar);
-    if (WebSocket.RequestProcessor.CanProcessAsBlockChainResponce(context.Request.Headers))
+    if (RequestProcessor.CanProcessAsBlockChainResponse(context.Request.Headers))
     {
-        await WebSocket.RequestProcessor.VerifyRequest(minerConnections, context);
+        await RequestProcessor.VerifyRequest(minerConnections, context);
         requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
         return;
     }
