@@ -30,6 +30,11 @@ public class MinerSocketProcessor
                         _minerConnections.Remove(this);
                         break;
                     }
+
+                    if (status.MessageType == WebSocketMessageType.Binary)
+                    {
+                        ResponseProcessor.ProcessRequest(maximumRead);
+                    }
                 }
                 catch
                 {
@@ -45,4 +50,5 @@ public class MinerSocketProcessor
         return;
 
     }
+
 }
