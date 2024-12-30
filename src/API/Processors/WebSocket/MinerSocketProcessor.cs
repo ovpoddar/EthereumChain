@@ -33,7 +33,7 @@ public class MinerSocketProcessor
 
                     if (status.MessageType == WebSocketMessageType.Binary)
                     {
-                        ResponseProcessor.ProcessRequest(maximumRead);
+                        ResponseProcessor.ProcessRequest(new Span<byte>(maximumRead, 0, status.Count));
                     }
                 }
                 catch
