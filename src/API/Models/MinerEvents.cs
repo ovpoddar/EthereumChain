@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace API.Models;
 internal class MinerEvents
 {
-    public static event EventHandler? Transaction_Added;
+    public static event EventHandler<TransactionAddedEventArgs?>? Transaction_Added;
     public static event EventHandler? Transaction_Updated;
     public static event EventHandler? Block_Generated;
     public static event EventHandler? Block_Confirmed;
@@ -28,7 +28,7 @@ internal class MinerEvents
         switch(transaction)
         {
             case Transaction.Added:
-                Transaction_Added?.Invoke(null, eventArgs);
+                Transaction_Added?.Invoke(null, eventArgs as TransactionAddedEventArgs);
                 break;
             case Transaction.Updated:
                 Transaction_Updated?.Invoke(null, eventArgs);

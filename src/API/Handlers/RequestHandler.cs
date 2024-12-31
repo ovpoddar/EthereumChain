@@ -37,8 +37,7 @@ internal static class RequestHandler
 
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
-            // TODO: also share to other nodes.
-
+            MinerEvents.RaisedEvent(MinerEvents.Transaction.Added, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
             return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
         }
         finally
