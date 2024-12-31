@@ -5,7 +5,7 @@ namespace API.Processors.WebSocket;
 internal class RequestProcessor
 {
     public static bool CanProcessAsBlockChainResponse(NameValueCollection headers) =>
-        headers.Get("Sec-WebSocket-Key") != string.Empty;
+        !string.IsNullOrWhiteSpace(headers.Get("Sec-WebSocket-Key"));
 
     public static async ValueTask VerifyRequest(List<MinerSocketProcessor> minerConnections, HttpListenerContext context)
     {
