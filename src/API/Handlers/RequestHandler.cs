@@ -3,6 +3,7 @@ using Shared;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,7 +38,7 @@ internal static class RequestHandler
 
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
-            MinerEvents.RaisedEvent(MinerEvents.Transaction.Added, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
+            MinerEvents.RaisedEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
             return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
         }
         finally

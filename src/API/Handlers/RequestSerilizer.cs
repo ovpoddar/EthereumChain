@@ -1,4 +1,5 @@
-﻿using API.Models;
+﻿using API.Helpers;
+using API.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,21 +18,6 @@ internal class RequestSerializer
     // possible values method, jsonrpc, params, id
     public static T? GetValueAs<T>(ref Span<byte> readBytes, string propertyName) =>
         GetValueAs<T>(new Utf8JsonReader(readBytes), propertyName);
-
-    static T? GetValueAs<T>(Utf8JsonReader reader, string propertyName)
-    {
-        while (reader.TokenType != JsonTokenType.EndObject || reader.CurrentDepth != 0)
-        {
-            if (reader.TokenType == JsonTokenType.PropertyName && reader.ValueTextEquals(propertyName))
-            {
-                reader.Read();
-                return DecodedValue<T>(ref reader);
-            }
-            reader.Read();
-        }
-        return default;
-    }
-
     public static T[] GetArrayAs<T>(ref Span<byte> readBytes, string propertyName, int itemsCount = 10)
     {
         var reader = new Utf8JsonReader(readBytes);
@@ -62,6 +48,19 @@ internal class RequestSerializer
         return [];
     }
 
+    static T? GetValueAs<T>(Utf8JsonReader reader, string propertyName)
+    {
+        while (reader.TokenType != JsonTokenType.EndObject || reader.CurrentDepth != 0)
+        {
+            if (reader.TokenType == JsonTokenType.PropertyName && reader.ValueTextEquals(propertyName))
+            {
+                reader.Read();
+                return DecodedValue<T>(ref reader);
+            }
+            reader.Read();
+        }
+        return default;
+    }
     static T DecodedValue<T>(ref Utf8JsonReader propertyReader)
     {
         if (typeof(T) == typeof(string))
@@ -92,5 +91,12 @@ internal class RequestSerializer
         }
         throw new NotImplementedException();
     }
+
+    public static RequestEvent GetRequestEvent(ref Span<byte> readBytes) =>
+        new RequestEvent()
+        {
+            EventType = readBytes[0..1].ToStruct<MinerEventsTypes>(),
+            EventValue = readBytes[1..]
+        };
 
 }

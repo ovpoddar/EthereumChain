@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using API.Handlers;
+using System.Net.WebSockets;
 
 namespace API.Processors.WebSocket;
 public class MinerSocketProcessor
@@ -33,7 +34,9 @@ public class MinerSocketProcessor
 
                     if (status.MessageType == WebSocketMessageType.Binary)
                     {
-                        ResponseProcessor.ProcessRequest(new Span<byte>(maximumRead, 0, status.Count));
+                        var response = new Span<byte>(maximumRead, 0, status.Count);
+                        var data = RequestSerializer.GetRequestEvent(ref response);
+                        ResponseProcessor.ProcessRequest(data);
                     }
                 }
                 catch

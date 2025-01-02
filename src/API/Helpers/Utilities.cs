@@ -53,4 +53,9 @@ internal static class Utilities
         return (byte)(first << 4 | second);
     }
 
+    public static T ToStruct<T>(this byte[] @bytes) where T : struct =>
+       Unsafe.As<byte, T>(ref @bytes[0]);
+
+    public static T ToStruct<T>(this Span<byte> @bytes) where T : struct =>
+        Unsafe.As<byte, T>(ref @bytes[0]);
 }
