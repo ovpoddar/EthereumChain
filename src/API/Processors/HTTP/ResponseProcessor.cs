@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace API.Processors.HTTP;
 internal static class ResponseProcessor
 {
-    internal static void ProcessRequest(ref Span<byte> requestContext, Stream response, SQLiteConnection sqLiteConnection)
+    internal static void ProcessRequest(ref Span<byte> requestContext, Stream response, SQLiteConnection sqLiteConnection, WebSocket.MinerSocketProcessor webSocketListener)
     {
         response.Write("\"result\":"u8);
         var method = RequestSerializer.GetValueAs<string>(ref requestContext, "method");
@@ -48,7 +48,7 @@ internal static class ResponseProcessor
             case "eth_sendRawTransaction":
                 var transactionDetailsRange = RequestSerializer.GetArrayAs<Range>(ref requestContext, "params", 1);
                 var transactionDetails = requestContext[transactionDetailsRange[0]];
-                response.Write(RequestHandler.ProcessEthSendRawTransaction(ref transactionDetails, sqLiteConnection));
+                response.Write(RequestHandler.ProcessEthSendRawTransaction(ref transactionDetails, sqLiteConnection, webSocketListener));
                 break;
             //TODO: implement own custom chain and infrastructure.
 

@@ -60,7 +60,7 @@ async void ReceivedRequest(IAsyncResult ar)
             context.Response.OutputStream.Write(","u8);
         }
 
-        HTTP.ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection);
+        HTTP.ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection, requestProcesser.WebSocketListener);
 
         context.Response.OutputStream.Write("}"u8);
         context.Response.OutputStream.Close();

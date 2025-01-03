@@ -1,9 +1,11 @@
 ﻿using API.Handlers;
 using API.Models;
 using NBitcoin.Secp256k1;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
 
 namespace API.Processors.WebSocket;
 public class MinerSocketProcessor : IAsyncDisposable
@@ -46,8 +48,7 @@ public class MinerSocketProcessor : IAsyncDisposable
 
                     if (status.MessageType == WebSocketMessageType.Binary)
                     {
-                        var response = new Span<byte>(maximumRead, 0, status.Count);
-                        var data = RequestSerializer.GetRequestEvent(ref response);
+                        RequestEvent data = new(maximumRead.AsSpan().Slice(0, status.Count));
                         ResponseProcessor.ProcessRequest(data);
                     }
                 }
@@ -65,14 +66,14 @@ public class MinerSocketProcessor : IAsyncDisposable
 
     }
 
-    //public Task NotifyAll(RequestEvent requestEvent)
-    //{
 
-    //    Parallel.ForEachAsync(_minerConnections, (a, b) =>
-    //    {
-    //        a.SendAsync()
-    //    });
-    //}
+    public async Task NotifyAll(byte[] response)
+    {
+        await Parallel.ForEachAsync(_minerConnections, async (a, b) =>
+        {
+            await a.SendAsync(response, WebSocketMessageType.Binary, true, b);
+        });
+    }
 
     public async ValueTask DisposeAsync()
     {
