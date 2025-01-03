@@ -1,19 +1,31 @@
 ﻿using API.Handlers;
+using API.Models;
+using NBitcoin.Secp256k1;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.WebSockets;
 
 namespace API.Processors.WebSocket;
-public class MinerSocketProcessor
+public class MinerSocketProcessor : IAsyncDisposable
 {
-    private readonly List<MinerSocketProcessor> _minerConnections;
-    private readonly System.Net.WebSockets.WebSocket _webSocket;
+    private readonly List<System.Net.WebSockets.WebSocket> _minerConnections;
 
-    public MinerSocketProcessor(List<MinerSocketProcessor> minerConnections, System.Net.WebSockets.WebSocket webSocket)
+    public MinerSocketProcessor() =>
+        this._minerConnections = new(Setting.MinerNetworkCount);
+
+    public async Task<System.Net.WebSockets.WebSocket?> HandleExpandNetworkAsync(HttpListenerContext context)
     {
-        this._minerConnections = minerConnections;
-        this._webSocket = webSocket;
+        if (_minerConnections.Count == Setting.MinerNetworkCount)
+        {
+            context.Response.Close();
+            return null;
+        }
+        var connection = await context.AcceptWebSocketAsync(null);
+        _minerConnections.Add(connection.WebSocket);
+        return connection.WebSocket;
     }
 
-    internal void Run()
+    public void StartReadResponse(System.Net.WebSockets.WebSocket webSocket)
     {
         var maximumRead = new byte[1024];
         Task.Run(async () =>
@@ -22,13 +34,13 @@ public class MinerSocketProcessor
             {
                 try
                 {
-                    var status = await _webSocket.ReceiveAsync(maximumRead, default);
+                    var status = await webSocket.ReceiveAsync(maximumRead, default);
 
                     if (status.MessageType == WebSocketMessageType.Close)
                     {
-                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, " a normal closure", default);
-                        _webSocket.Dispose();
-                        _minerConnections.Remove(this);
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, " a normal closure", default);
+                        webSocket.Dispose();
+                        _minerConnections.Remove(webSocket);
                         break;
                     }
 
@@ -41,17 +53,33 @@ public class MinerSocketProcessor
                 }
                 catch
                 {
-                    await _webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError, 
+                    await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
                         "server is terminating the connection because it encountered an unexpected condition that prevented it from fulfilling the request",
                         default);
-                    _webSocket.Dispose();
-                    _minerConnections.Remove(this);
+                    webSocket.Dispose();
+                    _minerConnections.Remove(webSocket);
                     break;
                 }
             }
         });
-        return;
 
     }
 
+    //public Task NotifyAll(RequestEvent requestEvent)
+    //{
+
+    //    Parallel.ForEachAsync(_minerConnections, (a, b) =>
+    //    {
+    //        a.SendAsync()
+    //    });
+    //}
+
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var connection in _minerConnections)
+        {
+            await connection.CloseAsync(default, null, default);
+            connection.Dispose();
+        }
+    }
 }

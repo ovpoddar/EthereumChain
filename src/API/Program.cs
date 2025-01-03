@@ -9,19 +9,19 @@ using System.Net;
 using System.Net.Sockets;
 using API.Processors.WebSocket;
 
-List<MinerSocketProcessor> minerConnections = new(Setting.MinerNetworkCount);
 using (var sqlConnection = InitializedDatabase())
-using (var listener = new HttpListener())
+using (var httpListener = new HttpListener())
+await using (var webSocketListener = new MinerSocketProcessor())
 {
-    listener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
-    listener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
-    listener.Start();
-    foreach (var item in listener.Prefixes)
+    httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
+    httpListener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
+    httpListener.Start();
+    foreach (var item in httpListener.Prefixes)
         Console.WriteLine($"RPC Application is listening on {item}");
     Console.WriteLine($"Miner application listening on ws://http://127.0.0.1:{Setting.RPCPort}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
-    listener.BeginGetContext(ReceivedRequest, new ProcessorModel(listener, sqlConnection));
+    httpListener.BeginGetContext(ReceivedRequest, new ProcessorModel(httpListener, webSocketListener, sqlConnection));
     Console.ReadLine();
 }
 
@@ -33,7 +33,8 @@ async void ReceivedRequest(IAsyncResult ar)
     var context = requestProcesser.Listener.EndGetContext(ar);
     if (RequestProcessor.CanProcessAsBlockChainResponse(context.Request.Headers))
     {
-        await RequestProcessor.VerifyRequest(minerConnections, context);
+        var newMiner = await requestProcesser.WebSocketListener.HandleExpandNetworkAsync(context);
+        if (newMiner != null) requestProcesser.WebSocketListener.StartReadResponse(newMiner);
         requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
         return;
     }

@@ -91,12 +91,4 @@ internal class RequestSerializer
         }
         throw new NotImplementedException();
     }
-
-    public static RequestEvent GetRequestEvent(ref Span<byte> readBytes) =>
-        new RequestEvent()
-        {
-            EventType = readBytes[0..1].ToStruct<MinerEventsTypes>(),
-            EventValue = readBytes[1..]
-        };
-
 }

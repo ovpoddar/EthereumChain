@@ -1,5 +1,7 @@
-﻿using System.Collections.Specialized;
+﻿using API.Handlers;
+using System.Collections.Specialized;
 using System.Net;
+using System.Net.WebSockets;
 
 namespace API.Processors.WebSocket;
 internal class RequestProcessor
@@ -7,14 +9,4 @@ internal class RequestProcessor
     public static bool CanProcessAsBlockChainResponse(NameValueCollection headers) =>
         !string.IsNullOrWhiteSpace(headers.Get("Sec-WebSocket-Key"));
 
-    public static async ValueTask VerifyRequest(List<MinerSocketProcessor> minerConnections, HttpListenerContext context)
-    {
-        if (minerConnections.Count == Setting.MinerNetworkCount)
-            context.Response.Close();
-
-        var connection = await context.AcceptWebSocketAsync(null);
-        var connectionProcesser = new MinerSocketProcessor(minerConnections, connection.WebSocket);
-        minerConnections.Add(connectionProcesser);
-        connectionProcesser.Run();
-    }
 }
