@@ -10,13 +10,13 @@ using System.Net.Sockets;
 using API.Processors.WebSocket;
 using API.Processors.MinerEvents;
 
-var eventProcesser = new EventProcesser();
 
 using (var sqlConnection = InitializedDatabase())
 using (var httpListener = new HttpListener())
 await using (var webSocketListener = new MinerSocketProcessor())
 {
-    eventProcesser.Hanlde();
+    var eventProcesser = new EventProcesses(webSocketListener);
+    eventProcesser.HookEventHandlers();
     httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     httpListener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
     httpListener.Start();
@@ -64,7 +64,7 @@ async void ReceivedRequest(IAsyncResult ar)
             context.Response.OutputStream.Write(","u8);
         }
 
-        HTTP.ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection, requestProcesser.WebSocketListener);
+        HTTP.ResponseProcessor.ProcessRequest(ref requestContext, context.Response.OutputStream, requestProcesser.SQLiteConnection);
 
         context.Response.OutputStream.Write("}"u8);
         context.Response.OutputStream.Close();

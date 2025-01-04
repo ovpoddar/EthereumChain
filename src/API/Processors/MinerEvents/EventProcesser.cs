@@ -1,4 +1,5 @@
 ﻿using API.Models;
+using API.Processors.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,9 +7,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace API.Processors.MinerEvents;
-internal class EventProcesser
+internal class EventProcesses
 {
-    public void Hanlde()
+    private MinerSocketProcessor _webSocketListener;
+
+    public EventProcesses(MinerSocketProcessor webSocketListener) => 
+        this._webSocketListener = webSocketListener;
+
+    public void HookEventHandlers()
     {
         MinerEvents.Transaction_Added += MinerEvents_Transaction_Added;
         MinerEvents.Transaction_Updated += MinerEvents_Transaction_Updated;
@@ -33,6 +39,7 @@ internal class EventProcesser
 
     private void MinerEvents_Transaction_Added(object? sender, Models.TransactionAddedEventArgs e)
     {
+        
         Console.WriteLine("Something happend.");
     }
 }
