@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 namespace API.Processors.WebSocket;
 internal static class ResponseProcessor
 {
-    public static MinerEvents MinerEvents = new();
 
     public static void ProcessRequest(RequestEvent response)
     {

@@ -1,4 +1,8 @@
 ﻿using API.Models;
+using API.Processors.MinerEvents;
+using API.Processors.WebSocket;
+using Nethereum.Merkle.Patricia;
+using Newtonsoft.Json.Linq;
 using Shared;
 using System;
 using System.Collections.Generic;
@@ -22,7 +26,7 @@ internal static class RequestHandler
         return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
     }
 
-    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection, MinerSocketProcessor webSocketListener)
     {
         try
         {
@@ -38,7 +42,7 @@ internal static class RequestHandler
 
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
-            MinerEvents.RaisedEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
+            MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
             return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
         }
         finally
