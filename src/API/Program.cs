@@ -8,14 +8,12 @@ using System.Data.SQLite;
 using System.Net;
 using System.Net.Sockets;
 using API.Processors.WebSocket;
-using API.Processors.MinerEvents;
-
 
 using (var sqlConnection = InitializedDatabase())
 using (var httpListener = new HttpListener())
 await using (var webSocketListener = new MinerSocketProcessor())
 {
-    var eventProcesser = new EventProcesses(webSocketListener);
+    var eventProcesser = new ResponseProcessor(webSocketListener);
     eventProcesser.HookEventHandlers();
     httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     httpListener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");

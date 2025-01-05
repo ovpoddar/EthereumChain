@@ -1,11 +1,10 @@
-﻿using API.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Processors.MinerEvents;
+namespace API.Models;
 internal struct MinerEvents
 {
     public static event EventHandler<TransactionAddedEventArgs>? Transaction_Added;
