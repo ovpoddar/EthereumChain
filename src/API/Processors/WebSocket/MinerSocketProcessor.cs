@@ -29,7 +29,7 @@ public class MinerSocketProcessor : IAsyncDisposable
 
     public void StartReadResponse(System.Net.WebSockets.WebSocket webSocket)
     {
-        var maximumRead = new byte[1024];
+        var maximumRead = new byte[1024 * 2];
         Task.Run(async () =>
         {
             while (true)
@@ -49,7 +49,24 @@ public class MinerSocketProcessor : IAsyncDisposable
                     if (status.MessageType == WebSocketMessageType.Binary)
                     {
                         RequestEvent data = new(maximumRead.AsSpan().Slice(0, status.Count));
-                        ResponseProcessor.ProcessRequest(data);
+                        // received new events form network
+                        switch (data.EventType)
+                        {
+                            case MinerEventsTypes.TransactionAdded:
+                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                break;
+                            case MinerEventsTypes.TransactionUpdated:
+                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                break;
+                            case MinerEventsTypes.BlockGenerated:
+                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                break;
+                            case MinerEventsTypes.BlockConfirmed:
+                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                break;
+                            default:
+                                throw new NotImplementedException();
+                        }
                     }
                 }
                 catch

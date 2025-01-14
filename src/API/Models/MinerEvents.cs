@@ -12,7 +12,7 @@ internal struct MinerEvents
     public static event EventHandler? Block_Generated;
     public static event EventHandler? Block_Confirmed;
 
-    public static void RaisedMinerEvent(MinerEventsTypes minerEvents, object eventArgs)
+    public static void RaisedMinerEvent(MinerEventsTypes minerEvents, MinerEventArgs eventArgs)
     {
         switch (minerEvents)
         {

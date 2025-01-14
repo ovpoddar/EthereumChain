@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace API.Models;
-internal class TransactionAddedEventArgs : EventArgs
+internal class TransactionAddedEventArgs : MinerEventArgs
 {
     public Guid TransactionId { get; }
     public string Transaction { get; }
@@ -14,5 +14,10 @@ internal class TransactionAddedEventArgs : EventArgs
     {
         Transaction = transaction;
         TransactionId = transactionId;
+    }
+
+    protected override void ParseFromPacket(Span<byte> data)
+    {
+        throw new NotImplementedException();
     }
 }

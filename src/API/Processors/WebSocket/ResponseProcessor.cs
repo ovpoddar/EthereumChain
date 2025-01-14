@@ -10,16 +10,11 @@ using System.Threading.Tasks;
 namespace API.Processors.WebSocket;
 internal class ResponseProcessor
 {
-    private MinerSocketProcessor _webSocketListener;
+    // as miner i'm responding on raising events
+    private readonly MinerSocketProcessor _webSocketListener;
 
     public ResponseProcessor(MinerSocketProcessor webSocketListener) =>
         this._webSocketListener = webSocketListener;
-
-    public static void ProcessRequest(RequestEvent response)
-    {
-       // event happend to the network time to handle it.
-    }
-
 
     public void HookEventHandlers()
     {
@@ -44,9 +39,9 @@ internal class ResponseProcessor
         Console.WriteLine("Something happend.");
     }
 
-    private void MinerEvents_Transaction_Added(object? sender, Models.TransactionAddedEventArgs e)
+    private void MinerEvents_Transaction_Added(object? sender, TransactionAddedEventArgs e)
     {
-
+        _webSocketListener.NotifyAll();
         Console.WriteLine("Something happend.");
     }
 

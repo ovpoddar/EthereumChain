@@ -1,6 +1,7 @@
 ﻿using API.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ internal ref struct RequestEvent
     public ReadOnlySpan<byte> EventValue { get; }
     public RequestEvent(Span<byte> readBytes)
     {
+        Debug.Assert(readBytes.Length > 2048);
         EventType = readBytes[0..1].ToStruct<MinerEventsTypes>();
         EventValue = readBytes[1..];
     }
