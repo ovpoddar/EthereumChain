@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace API.Models;
 internal class TransactionAddedEventArgs : MinerEventArgs
@@ -16,18 +18,22 @@ internal class TransactionAddedEventArgs : MinerEventArgs
         TransactionId = transactionId;
     }
 
-    public override void ParseFromPacket(Span<byte> data)
+    public TransactionAddedEventArgs(ReadOnlySpan<byte> data)
     {
-        throw new NotImplementedException();
-    }
-
-    public override void WriteToByte(Span<byte> data)
-    {
-        data[16] = 0; data[data.Length - 1] = 0;
-        this.TransactionId.TryWriteBytes(data);
-        Encoding.UTF8.GetBytes(this.Transaction, data[17..]);
+        this.TransactionId = new Guid(data[..16]);
+        this.Transaction = Encoding.UTF8.GetString(data[17..^1]);
     }
 
     public override ushort GetWrittenByteSize() =>
         (ushort)(18 + Encoding.UTF8.GetByteCount(this.Transaction));
+
+    public override RequestEvent GetRequestData(Span<byte> context)
+    {
+        context[16] = 0;
+        context[^1] = 0;
+        var response = this.TransactionId.TryWriteBytes(context);
+        Debug.Assert(response);
+        Encoding.UTF8.GetBytes(this.Transaction, context[17..]);
+        return new RequestEvent(MinerEventsTypes.TransactionAdded, context);
+    }
 }

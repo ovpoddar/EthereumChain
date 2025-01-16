@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace API.Models;
-internal enum MinerEventsTypes
+internal enum MinerEventsTypes : byte
 {
-    TransactionAdded,
-    TransactionUpdated,
-    BlockGenerated,
-    BlockConfirmed
+    TransactionAdded = 1,
+    TransactionUpdated = 2,
+    BlockGenerated = 3,
+    BlockConfirmed = 4
 }

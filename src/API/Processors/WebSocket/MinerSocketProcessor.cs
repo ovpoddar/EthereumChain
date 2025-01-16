@@ -8,7 +8,7 @@ using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 
 namespace API.Processors.WebSocket;
-public class MinerSocketProcessor : IAsyncDisposable
+internal class MinerSocketProcessor : IAsyncDisposable
 {
     private readonly List<System.Net.WebSockets.WebSocket> _minerConnections;
 
@@ -53,16 +53,16 @@ public class MinerSocketProcessor : IAsyncDisposable
                         switch (data.EventType)
                         {
                             case MinerEventsTypes.TransactionAdded:
-                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                 MinerEvents.RaisedMinerEvent(data.EventType, new TransactionAddedEventArgs(data.EventValue));
                                 break;
                             case MinerEventsTypes.TransactionUpdated:
-                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
                                 break;
                             case MinerEventsTypes.BlockGenerated:
-                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
                                 break;
                             case MinerEventsTypes.BlockConfirmed:
-                                MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
                                 break;
                             default:
                                 throw new NotImplementedException();
@@ -84,11 +84,11 @@ public class MinerSocketProcessor : IAsyncDisposable
     }
 
 
-    public async Task NotifyAll(byte[] response)
+    public async Task NotifyAll(byte[] requestEvent)
     {
         await Parallel.ForEachAsync(_minerConnections, async (a, b) =>
         {
-            await a.SendAsync(response, WebSocketMessageType.Binary, true, b);
+            await a.SendAsync(requestEvent, WebSocketMessageType.Binary, true, b);
         });
     }
 
