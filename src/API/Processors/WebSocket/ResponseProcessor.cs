@@ -39,10 +39,11 @@ internal class ResponseProcessor
         Console.WriteLine("Something happend.");
     }
 
-    private void MinerEvents_Transaction_Added(object? sender, TransactionAddedEventArgs e)
+    private async void MinerEvents_Transaction_Added(object? sender, TransactionAddedEventArgs e)
     {
-        _webSocketListener.NotifyAll();
-        Console.WriteLine("Something happend.");
+        Span<byte> response = stackalloc byte[e.GetWrittenByteSize()];
+        e.WriteToByte(response);
+        await _webSocketListener.NotifyAll(response.ToArray());
     }
 
 }

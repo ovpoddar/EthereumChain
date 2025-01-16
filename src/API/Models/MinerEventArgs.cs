@@ -7,5 +7,7 @@ using System.Threading.Tasks;
 namespace API.Models;
 internal abstract class MinerEventArgs : EventArgs
 {
-    protected abstract void ParseFromPacket(Span<byte> data);
+    public abstract void ParseFromPacket(Span<byte> data);
+    public abstract void WriteToByte(Span<byte> data);
+    public abstract ushort GetWrittenByteSize();
 }

@@ -27,6 +27,7 @@ internal static class RequestHandler
     }
 
     public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection, MinerSocketProcessor webSocketListener)
+    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
     {
         try
         {
@@ -37,12 +38,13 @@ internal static class RequestHandler
                 values (@Id, @RawTransaction);
                 """, sqLiteConnection);
             var transactionId = Guid.NewGuid();
+            var transaction = Encoding.UTF8.GetString(requestContext[1..^1]);
             processCommand.Parameters.AddWithValue("@Id", transactionId);
-            processCommand.Parameters.AddWithValue("@RawTransaction", Encoding.UTF8.GetString(requestContext[1..^1]));
+            processCommand.Parameters.AddWithValue("@RawTransaction", transaction);
 
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
-            MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, requestContext[1..^1].ToString()));
+            MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, transaction));
             return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
         }
         finally
