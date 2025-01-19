@@ -1,4 +1,7 @@
 ﻿
+using System.Security.Cryptography;
+using System.Text;
+
 namespace Shared;
 
 public class Block
@@ -6,7 +9,7 @@ public class Block
     public int Number { get; set; }
     public string Hash { get; set; }
     public string ParentHash { get; set; }
-    public string Nonce { get; set; }
+    public long Nonce { get; set; }
     public string Sha3Uncles { get; set; }
     public string LogsBloom { get; set; }
     public string TransactionsRoot { get; set; }
@@ -23,13 +26,19 @@ public class Block
     public List<Transaction> Transactions { get; }
     public string[] Uncles { get; set; }
 
-    public void AddTransaction(Transaction transaction) => 
-        Transactions.Add(transaction);
-
-    public Block(string minerAddress)
+    public Block(string minerAddress, string parentHash)
     {
         Miner = minerAddress;
         TimeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         Transactions = [];
+        ParentHash = parentHash;
+        Nonce = 0;
+    }
+
+    public string CalculateHash()
+    {
+        var rawData = $"{Number} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
+        return BitConverter.ToString(bytes).Replace("-", "");
     }
 }

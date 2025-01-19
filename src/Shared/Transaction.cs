@@ -1,17 +1,6 @@
-﻿using Shared.Helpers;
-using Nethereum.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Principal;
+﻿using Nethereum.Model;
+using Shared.Helpers;
 using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Runtime.CompilerServices;
-using System.Numerics;
-using System.Diagnostics;
-using Newtonsoft.Json.Linq;
-using System.Data.SQLite;
 
 namespace Shared;
 public class Transaction
@@ -30,9 +19,12 @@ public class Transaction
     public string V { get; }
     public string R { get; }
     public string S { get; }
+    public string RawTransaction { get; }
+
     public Transaction(Guid id, Span<byte> transaction)
     {
         _id = id;
+        RawTransaction = Encoding.UTF8.GetString(transaction);
         Span<byte> decimalArray = stackalloc byte[transaction.Length / 2];
         transaction.HexArrayToDecimalArray(decimalArray);
         if (decimalArray[0] >= 0 && decimalArray[0] <= 127) throw new ArgumentException();
