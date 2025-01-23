@@ -13,6 +13,8 @@ using (var sqlConnection = InitializedDatabase())
 using (var httpListener = new HttpListener())
 await using (var webSocketListener = new MinerSocketProcessor())
 {
+
+
     var eventProcesser = new ResponseProcessor(webSocketListener);
     eventProcesser.HookEventHandlers();
     httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
@@ -70,7 +72,7 @@ async void ReceivedRequest(IAsyncResult ar)
         return;
     }
 
-    context.Response.OutputStream.Write("hello World! it's listening"u8);
+    context.Response.OutputStream.Write("hello World! we're listening"u8);
     context.Response.OutputStream.Close();
     requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
 }
