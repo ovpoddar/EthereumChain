@@ -1,6 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
 // check if chain is setup or not
-// Pull the block chain from API some how or from mem pool or possibly from other nodes
 //
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ internal class MinerWorker : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Worker running at: {1}", DateTimeOffset.Now.Ticks);
+            _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
             await Task.Delay(1000, stoppingToken);
         }
     }
