@@ -11,7 +11,7 @@ using API.Processors.WebSocket;
 
 using (var sqlConnection = InitializedDatabase())
 using (var httpListener = new HttpListener())
-await using (var webSocketListener = new MinerSocketProcessor())
+await using (var webSocketListener = new MinerSocketProcessor(sqlConnection))
 {
 
 
@@ -39,6 +39,7 @@ async void ReceivedRequest(IAsyncResult ar)
     {
         var newMiner = await requestProcesser.WebSocketListener.HandleExpandNetworkAsync(context);
         if (newMiner != null) requestProcesser.WebSocketListener.StartReadResponse(newMiner);
+
         requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
         return;
     }

@@ -10,7 +10,7 @@ namespace API.Models;
 internal readonly ref struct RequestEvent
 {
     public MinerEventsTypes EventType { get; }
-    public ReadOnlySpan<byte> EventValue { get; }
+    public Span<byte> EventValue { get; }
     public RequestEvent(Span<byte> readBytes)
     {
         Debug.Assert(readBytes.Length < 2048);
@@ -18,7 +18,7 @@ internal readonly ref struct RequestEvent
         EventValue = readBytes[1..];
     }
 
-    public RequestEvent(MinerEventsTypes minerEvents, ReadOnlySpan<byte> bytes)
+    public RequestEvent(MinerEventsTypes minerEvents, Span<byte> bytes)
     {
         EventType = minerEvents;
         EventValue = bytes;

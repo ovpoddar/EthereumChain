@@ -3,6 +3,7 @@ using API.Models;
 using NBitcoin.Secp256k1;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
@@ -11,9 +12,13 @@ namespace API.Processors.WebSocket;
 internal class MinerSocketProcessor : IAsyncDisposable
 {
     private readonly List<System.Net.WebSockets.WebSocket> _minerConnections;
+    private readonly SQLiteConnection _sqlConnection;
 
-    public MinerSocketProcessor() =>
+    public MinerSocketProcessor(SQLiteConnection sqlConnection)
+    {
         this._minerConnections = new(Setting.MinerNetworkCount);
+        this._sqlConnection = sqlConnection;
+    }
 
     public async Task<System.Net.WebSockets.WebSocket?> HandleExpandNetworkAsync(HttpListenerContext context)
     {
@@ -48,21 +53,22 @@ internal class MinerSocketProcessor : IAsyncDisposable
 
                     if (status.MessageType == WebSocketMessageType.Binary)
                     {
-                        RequestEvent data = new(maximumRead.AsSpan().Slice(0, status.Count));
+                        RequestEvent response = new(maximumRead.AsSpan().Slice(0, status.Count));
+                        var data = response.EventValue;
                         // received new events form network
-                        switch (data.EventType)
+                        switch (response.EventType)
                         {
                             case MinerEventsTypes.TransactionAdded:
-                                 MinerEvents.RaisedMinerEvent(data.EventType, new TransactionAddedEventArgs(data.EventValue));
+                                RequestHandler.ProcessEthSendRawTransaction(ref data, _sqlConnection);
                                 break;
                             case MinerEventsTypes.TransactionUpdated:
-                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
                                 break;
                             case MinerEventsTypes.BlockGenerated:
-                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
                                 break;
                             case MinerEventsTypes.BlockConfirmed:
-                                // MinerEvents.RaisedMinerEvent(data.EventType, data.EventValue);
+                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
                                 break;
                             default:
                                 throw new NotImplementedException();

@@ -26,26 +26,33 @@ internal static class RequestHandler
         return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
     }
 
-    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection, MinerSocketProcessor webSocketListener)
+    public static ReadOnlySpan<byte> ProcessEthSendTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    {
+        var transaction = new TransactionAddedEventArgs(Guid.NewGuid(), Encoding.UTF8.GetString(requestContext[1..^1]));
+        return ProcessEthSendRawTransaction(sqLiteConnection, transaction);
+    }
+
     public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    {
+        var transaction = new TransactionAddedEventArgs(requestContext);
+        return ProcessEthSendRawTransaction(sqLiteConnection, transaction);
+    }
+
+    private static ReadOnlySpan<byte> ProcessEthSendRawTransaction(SQLiteConnection sqLiteConnection, TransactionAddedEventArgs transaction)
     {
         try
         {
             sqLiteConnection.Open();
-
             using var processCommand = new SQLiteCommand("""
                 insert into MemPool (Id, RawTransaction)
                 values (@Id, @RawTransaction);
                 """, sqLiteConnection);
-            var transactionId = Guid.NewGuid();
-            var transaction = Encoding.UTF8.GetString(requestContext[1..^1]);
-            processCommand.Parameters.AddWithValue("@Id", transactionId);
-            processCommand.Parameters.AddWithValue("@RawTransaction", transaction);
-
+            processCommand.Parameters.AddWithValue("@Id", transaction.TransactionId);
+            processCommand.Parameters.AddWithValue("@RawTransaction", transaction.Transaction);
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
-            MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, new TransactionAddedEventArgs(transactionId, transaction));
-            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transactionId.ToString()));
+            MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, transaction);
+            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transaction.TransactionId.ToString()));
         }
         finally
         {

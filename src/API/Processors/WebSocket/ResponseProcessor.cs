@@ -3,6 +3,7 @@ using API.Models;
 using API.Processors;
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,8 +45,6 @@ internal class ResponseProcessor
         Span<byte> context = stackalloc byte[e.GetWrittenByteSize()];
         var requestEvent = e.GetRequestData(context);
         await _webSocketListener.NotifyAll(requestEvent);
-
-        // do the processing for the transaction added
     }
 
 }

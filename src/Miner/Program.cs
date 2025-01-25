@@ -13,8 +13,9 @@ await Host.CreateDefaultBuilder(args)
         logging.ClearProviders();
         logging.AddConsole();
     })
-    .ConfigureServices((hostContext, services) => {
+    .ConfigureServices((hostContext, services) =>
+    {
         services.AddHostedService<MinerWorker>();
-        services.AddHostedService<SyncChainWorker>();
     })
-    .Build().RunAsync();
+    .Build()
+    .RunAsync();

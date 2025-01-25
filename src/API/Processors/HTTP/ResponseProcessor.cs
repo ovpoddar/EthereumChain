@@ -48,7 +48,7 @@ internal static class ResponseProcessor
             case "eth_sendRawTransaction":
                 var transactionDetailsRange = RequestSerializer.GetArrayAs<Range>(ref requestContext, "params", 1);
                 var transactionDetails = requestContext[transactionDetailsRange[0]];
-                response.Write(RequestHandler.ProcessEthSendRawTransaction(ref transactionDetails, sqLiteConnection));
+                response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
             //TODO: implement own custom chain and infrastructure.
 
