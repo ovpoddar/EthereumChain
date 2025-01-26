@@ -44,4 +44,5 @@ public class Block
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
         return BitConverter.ToString(bytes).Replace("-", "");
     }
+
 }
