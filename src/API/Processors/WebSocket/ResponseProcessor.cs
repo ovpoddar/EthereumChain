@@ -1,6 +1,8 @@
 ﻿ using API.Handlers;
 using API.Models;
 using API.Processors;
+using Shared;
+using Shared.Core;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -40,7 +42,7 @@ internal class ResponseProcessor
         Console.WriteLine("Something happend.");
     }
 
-    private async void MinerEvents_Transaction_Added(object? sender, TransactionAddedEventArgs e)
+    private async void MinerEvents_Transaction_Added(object? sender, BaseTransaction e)
     {
         Span<byte> context = stackalloc byte[e.GetWrittenByteSize()];
         var requestEvent = e.GetRequestData(context);

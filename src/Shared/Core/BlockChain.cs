@@ -7,14 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared;
+namespace Shared.Core;
 public class BlockChain
 {
     private readonly SQLiteConnection _connection;
 
-    public BlockChain(SQLiteConnection connection) => 
+    public BlockChain(SQLiteConnection connection) =>
         _connection = connection ?? throw new NullReferenceException();
 
+    /// <summary>
+    /// Add block to chain
+    /// </summary>
+    /// <param name="block"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception">throw a exception if it failed to put items in database.</exception>
     public async Task AddBlock(Block block)
     {
         await _connection.OpenAsync();
@@ -39,7 +45,7 @@ public class BlockChain
                     VALUES (@Id, @Nonce, @GasPrice, @GasLimit, @To, @Value,
                         @Data, @V, @R, @S, @RawTransaction, @ChainDBId);
                 """, _connection, transaction);
-                transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.Id);
+                transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.TransactionId);
                 transactionCommand.Parameters.AddWithValue("@Nonce", blockTransaction.Nonce);
                 transactionCommand.Parameters.AddWithValue("@GasPrice", blockTransaction.GasPrice);
                 transactionCommand.Parameters.AddWithValue("@GasLimit", blockTransaction.GasLimit);

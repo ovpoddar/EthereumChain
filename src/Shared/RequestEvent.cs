@@ -1,4 +1,4 @@
-﻿using API.Helpers;
+﻿using Shared.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,14 +6,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Models;
-internal readonly ref struct RequestEvent
+namespace Shared;
+public readonly ref struct RequestEvent
 {
     public MinerEventsTypes EventType { get; }
     public Span<byte> EventValue { get; }
     public RequestEvent(Span<byte> readBytes)
     {
-        Debug.Assert(readBytes.Length < 2048);
         EventType = readBytes[0..1].ToStruct<MinerEventsTypes>();
         EventValue = readBytes[1..];
     }

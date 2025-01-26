@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Models;
-internal enum MinerEventsTypes : byte
+namespace Shared;
+public enum MinerEventsTypes : byte
 {
     TransactionAdded = 1,
     TransactionUpdated = 2,

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Shared;
+using Shared.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,7 +9,7 @@ using System.Threading.Tasks;
 namespace API.Models;
 internal struct MinerEvents
 {
-    public static event EventHandler<TransactionAddedEventArgs>? Transaction_Added;
+    public static event EventHandler<BaseTransaction>? Transaction_Added;
     public static event EventHandler? Transaction_Updated;
     public static event EventHandler? Block_Generated;
     public static event EventHandler? Block_Confirmed;
@@ -17,16 +19,16 @@ internal struct MinerEvents
         switch (minerEvents)
         {
             case MinerEventsTypes.TransactionAdded:
-                Transaction_Added?.Invoke(null, eventArgs as TransactionAddedEventArgs ?? throw new Exception("invalid data found"));
+                Transaction_Added?.Invoke(null, eventArgs as BaseTransaction ?? throw new Exception("invalid data found"));
                 break;
             case MinerEventsTypes.TransactionUpdated:
-                Transaction_Added?.Invoke(null, null);
+                Transaction_Updated?.Invoke(null, null);
                 break;
             case MinerEventsTypes.BlockGenerated:
-                Transaction_Added?.Invoke(null, null);
+                Block_Generated?.Invoke(null, null);
                 break;
             case MinerEventsTypes.BlockConfirmed:
-                Transaction_Added?.Invoke(null, null);
+                Block_Confirmed?.Invoke(null, null);
                 break;
             default:
                 throw new NotImplementedException();

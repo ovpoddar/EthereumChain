@@ -1,6 +1,7 @@
 ﻿using API.Handlers;
 using API.Models;
 using NBitcoin.Secp256k1;
+using Shared;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -34,6 +35,8 @@ internal class MinerSocketProcessor : IAsyncDisposable
 
     public void StartReadResponse(System.Net.WebSockets.WebSocket webSocket)
     {
+        var bucket = new List<byte>(1024 * 2);
+        int offset = 0;
         var maximumRead = new byte[1024 * 2];
         Task.Run(async () =>
         {
@@ -51,28 +54,41 @@ internal class MinerSocketProcessor : IAsyncDisposable
                         break;
                     }
 
-                    if (status.MessageType == WebSocketMessageType.Binary)
+                    if (status.EndOfMessage)
                     {
-                        RequestEvent response = new(maximumRead.AsSpan().Slice(0, status.Count));
-                        var data = response.EventValue;
-                        // received new events form network
-                        switch (response.EventType)
+                        if (status.MessageType == WebSocketMessageType.Binary)
                         {
-                            case MinerEventsTypes.TransactionAdded:
-                                RequestHandler.ProcessEthSendRawTransaction(ref data, _sqlConnection);
-                                break;
-                            case MinerEventsTypes.TransactionUpdated:
-                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
-                                break;
-                            case MinerEventsTypes.BlockGenerated:
-                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
-                                break;
-                            case MinerEventsTypes.BlockConfirmed:
-                                // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
-                                break;
-                            default:
-                                throw new NotImplementedException();
+                            var memory = offset == 0 
+                                ? maximumRead.AsSpan(0..status.Count) 
+                                : CollectionsMarshal.AsSpan(bucket);
+                            RequestEvent response = new(memory);
+                            var data = response.EventValue;
+                            // received new events form network
+                            switch (response.EventType)
+                            {
+                                case MinerEventsTypes.TransactionAdded:
+                                    RequestHandler.ProcessEthSendRawTransaction(ref data, _sqlConnection);
+                                    break;
+                                case MinerEventsTypes.TransactionUpdated:
+                                    // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
+                                    break;
+                                case MinerEventsTypes.BlockGenerated:
+                                    RequestHandler.ProcessGeneratedBlock(ref data, _sqlConnection);
+                                    break;
+                                case MinerEventsTypes.BlockConfirmed:
+                                    // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
+                                    break;
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
+                        bucket.Clear();
+                        offset = 0;
+                    }
+                    else
+                    {
+                        bucket.AddRange(maximumRead);
+                        offset += status.Count;
                     }
                 }
                 catch
