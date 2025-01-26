@@ -44,17 +44,9 @@ internal static class StructureProcesser
             );
         
             CREATE TABLE IF NOT EXISTS [Transaction](
-                [Id] TEXT, 
-                [Nonce] TEXT, 
-                [GasPrice] TEXT, 
-                [GasLimit] TEXT, 
-                [To] TEXT,
-                [Value] TEXT,
-                [Data] TEXT,
-                [V] TEXT,
-                [R] TEXT,
-                [S] TEXT,
-                [RawTransaction] TEXT
+                [Id] TEXT,
+                [RawTransaction] Text,
+                [BlockNumber] INTEGER
             );
         """, connection);
         await transactionCommand.ExecuteNonQueryAsync();
