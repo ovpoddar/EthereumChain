@@ -45,7 +45,7 @@ internal class ResponseProcessor
     private async void MinerEvents_Transaction_Added(object? sender, BaseTransaction e)
     {
         Span<byte> context = stackalloc byte[e.GetWrittenByteSize()];
-        var requestEvent = e.GetRequestData(context);
+        var requestEvent = e.GetRequestEvent(context);
         await _webSocketListener.NotifyAll(requestEvent);
     }
 

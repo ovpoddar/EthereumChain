@@ -22,7 +22,7 @@ public class Block
     public string GasLimit { get; set; }
     public string GasUsed { get; set; }
     public string TimeStamp { get; }
-    public List<BaseTransaction> Transactions { get; }
+    public List<Transaction> Transactions { get; }
     public string[] Uncles { get; set; }
 
     public Block(string minerAddress, string parentHash)

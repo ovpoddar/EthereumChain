@@ -25,7 +25,7 @@ public class BaseTransaction : MinerEventArgs
     public override ushort GetWrittenByteSize() =>
         (ushort)(18 + Encoding.UTF8.GetByteCount(this.RawTransaction));
 
-    public override RequestEvent GetRequestData(Span<byte> context)
+    public override RequestEvent GetRequestEvent(Span<byte> context)
     {
         context[16] = 0;
         context[^1] = 0;

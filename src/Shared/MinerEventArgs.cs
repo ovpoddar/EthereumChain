@@ -8,5 +8,5 @@ namespace Shared;
 public abstract class MinerEventArgs : EventArgs
 {
     public abstract ushort GetWrittenByteSize();
-    public abstract RequestEvent GetRequestData(Span<byte> context);
+    public abstract RequestEvent GetRequestEvent(Span<byte> context);
 }
