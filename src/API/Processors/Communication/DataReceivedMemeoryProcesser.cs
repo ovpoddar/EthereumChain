@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -65,4 +66,42 @@ internal class DataReceivedMemoryProcessor : IDisposable
             }
         }
     }
+
+    unsafe byte[] GetNextMessage()
+    {
+        while (true)
+        {
+            
+        }
+    }
 }
+
+
+/************************************************************************************************************************************************************************************
+Sender class:
+    has a method which takes the data.
+
+after creating the class it will establish the communication channel
+
+after calling the sender method it will do this
+
+the full Shared buffer
+***************************
+^
+set this value to 1, and print the message for remaining byte
+state value can be like 
+0. safe to write
+1. safe to read
+
+Receiver class:
+    has a method which raised the event when the data is received.
+
+after creating the class it will establish the communication channel
+
+after binding the callback. it will run a continuous loop to check the state of the buffer.
+
+***************************
+^
+checking this value if it is 1 then read the data and raise the event
+and also have to set the value to 0 after reading the data
+************************************************************************************************************************************************************************************/
