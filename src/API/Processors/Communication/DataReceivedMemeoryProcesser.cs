@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace API.Processors.Communication;
-internal class DataReceivedMemoryProcessor : IDisposable
+internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 {
     public object DisposeLock = new object();
     public bool IsDisposed { get; private set; }
@@ -15,22 +15,22 @@ internal class DataReceivedMemoryProcessor : IDisposable
 
     readonly MemoryMappedFile _mmFile;
     readonly MemoryMappedViewAccessor _accessor;
-    unsafe byte* _pointer;
+    unsafe IntPtr _pointer;
 
     //TODO: So the MemoryMappedFile doesn't work on linux
     // and i don't want to implement linux staff yet that would be too 
     // much work for now so i will just leave it like this
     // and i will implement it later. https://github.com/rohitrajskk/shared_memory/blob/main/src/shm.h
     // this is a c repo that i will use to implement the shared memory on linux
-    // might go follow this tutorial https://www.youtube.com/watch?v=7R9o6wU2fZM
-    public unsafe DataReceivedMemoryProcessor(string name)
+    // might go follow this https://stackoverflow.com/questions/74840766/c-sharp-mono-linux-memory-mapped-files-shared-memory-multiple-processes
+    public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator)
     {
         Name = name;
 #pragma warning disable CA1416 // Validate platform compatibility
         _mmFile = MemoryMappedFile.OpenExisting(name);
 #pragma warning restore CA1416 // Validate platform compatibility
         _accessor = _mmFile.CreateViewAccessor();
-        _pointer = (byte*)_accessor.SafeMemoryMappedViewHandle.DangerousGetHandle().ToPointer();
+        _pointer = _accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
     }
 
     public MemoryMappedViewAccessor DataReceivedMemoryAccessors
@@ -38,7 +38,7 @@ internal class DataReceivedMemoryProcessor : IDisposable
         get { EnsureNotDisposed(); return _accessor; }
     }
 
-    public unsafe byte* Pointer
+    public unsafe IntPtr Pointer
     {
         get { EnsureNotDisposed(); return _pointer; }
     }
@@ -62,17 +62,40 @@ internal class DataReceivedMemoryProcessor : IDisposable
                 IsDisposed = true;
                 _accessor.Dispose();
                 _mmFile.Dispose();
-                _pointer = null;
+                _pointer = IntPtr.Zero;
             }
         }
     }
 
-    unsafe byte[] GetNextMessage()
+    // check the index access
+    public unsafe void SendDataAsync(byte[] data)
     {
-        while (true)
+        var context = (byte*)_pointer.ToPointer();
+        if (data.Length > Setting.SharedMemorySize)
         {
-            
+                var totalWritten = 0;
+                while (totalWritten != data.Length)
+                {
+                    if (context[0] == 0)
+                    {
+                        var writeSize = Math.Min(data.Length - totalWritten, Setting.SharedMemorySize);
+                        Marshal.Copy(data[totalWritten..writeSize], totalWritten, _pointer + 1, writeSize);
+                        context[0] = 1;
+                    }
+                    Task.Delay(100).Wait();
+                }
+                context[0] = 1;
         }
+        else
+        {
+            Marshal.Copy(data, 0, _pointer + 1, data.Length);
+            context[0] = 1;
+        }
+    }
+
+    public Task<byte[]> ReceiveDataAsync()
+    {
+        throw new NotImplementedException();
     }
 }
 

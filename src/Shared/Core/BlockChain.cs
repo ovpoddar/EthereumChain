@@ -43,7 +43,7 @@ public class BlockChain
                     INSERT INTO [Transaction] ([Id], [RawTransaction], [BlockNumber])
                     VALUES (@Id, @RawTransaction, @ChainDBId);
                 """, _connection, transaction);
-                transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.TransactionId);
+                transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.Id);
                 transactionCommand.Parameters.AddWithValue("@RawTransaction", blockTransaction.RawTransaction);
                 transactionCommand.Parameters.AddWithValue("@ChainDBId", block.Number);
 

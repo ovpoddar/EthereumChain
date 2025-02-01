@@ -20,4 +20,6 @@ internal static class Setting
     public static readonly byte[] NetWorkIdFormattedByte = Encoding.UTF8.GetBytes($"\"{NetWorkId}\"");
     public static readonly byte[] ChainIdFormattedByte = Encoding.UTF8.GetBytes($"\"0x{ChainId:x}\"");
     public static readonly byte[] GasPriceFormattedByte = Encoding.UTF8.GetBytes($"\"0x{GASPrice:x}\"");
+
+    public const int SharedMemorySize = 1024 * 2;
 }
