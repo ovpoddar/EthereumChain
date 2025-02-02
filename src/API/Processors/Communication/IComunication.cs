@@ -8,5 +8,5 @@ namespace API.Processors.Communication;
 internal interface ICommunication
 {
     void SendDataAsync(byte[] data);
-    Task<byte[]> ReceiveDataAsync();
+    void ReceiveData(Action<byte[]> action);
 }

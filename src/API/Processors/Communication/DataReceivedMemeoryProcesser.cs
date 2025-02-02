@@ -1,12 +1,19 @@
-﻿using System;
+﻿using API.Exceptions;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace API.Processors.Communication;
+/// <summary>
+/// <remarks>this is not thread safe.</remarks>
+/// </summary>
 internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 {
     public object DisposeLock = new object();
@@ -16,6 +23,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     readonly MemoryMappedFile _mmFile;
     readonly MemoryMappedViewAccessor _accessor;
     unsafe IntPtr _pointer;
+    private Action<byte[]>? _action;
 
     //TODO: So the MemoryMappedFile doesn't work on linux
     // and i don't want to implement linux staff yet that would be too 
@@ -73,18 +81,18 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         var context = (byte*)_pointer.ToPointer();
         if (data.Length > Setting.SharedMemorySize)
         {
-                var totalWritten = 0;
-                while (totalWritten != data.Length)
+            var totalWritten = 0;
+            while (totalWritten != data.Length)
+            {
+                if (context[0] == 0)
                 {
-                    if (context[0] == 0)
-                    {
-                        var writeSize = Math.Min(data.Length - totalWritten, Setting.SharedMemorySize);
-                        Marshal.Copy(data[totalWritten..writeSize], totalWritten, _pointer + 1, writeSize);
-                        context[0] = 1;
-                    }
-                    Task.Delay(100).Wait();
+                    var writeSize = Math.Min(data.Length - totalWritten, Setting.SharedMemorySize);
+                    Marshal.Copy(data[totalWritten..writeSize], totalWritten, _pointer + 1, writeSize);
+                    context[0] = 1;
                 }
-                context[0] = 1;
+                Task.Delay(100).Wait();
+            }
+            context[0] = 1;
         }
         else
         {
@@ -93,9 +101,30 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
     }
 
-    public Task<byte[]> ReceiveDataAsync()
+    public void ReceiveData(Action<byte[]> action)
     {
-        throw new NotImplementedException();
+        if (action != null)
+            throw new MultipleCallingException();
+
+        _action = action;
+        new Thread(StartWorker).Start();
+    }
+
+
+    public unsafe void StartWorker()
+    {
+        var context = (byte*)_pointer.ToPointer();
+        Debug.Assert(_action != null);
+        while (true)
+        {
+            if (context[0] != 1)
+                continue;
+
+            var data = new byte[Setting.SharedMemorySize];
+            Marshal.Copy(_pointer + 1, data, 0, Setting.SharedMemorySize);
+            _action.Invoke(data);
+            context[0] = 0;
+        }
     }
 }
 
