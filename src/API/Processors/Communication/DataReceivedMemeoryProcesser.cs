@@ -23,22 +23,24 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     readonly MemoryMappedFile _mmFile;
     readonly MemoryMappedViewAccessor _accessor;
     unsafe IntPtr _pointer;
-    private Action<byte[]>? _action;
-
-    //TODO: So the MemoryMappedFile doesn't work on linux
-    // and i don't want to implement linux staff yet that would be too 
-    // much work for now so i will just leave it like this
-    // and i will implement it later. https://github.com/rohitrajskk/shared_memory/blob/main/src/shm.h
-    // this is a c repo that i will use to implement the shared memory on linux
-    // might go follow this https://stackoverflow.com/questions/74840766/c-sharp-mono-linux-memory-mapped-files-shared-memory-multiple-processes
-    public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator)
+    private readonly Action<byte[]> _action;
+    public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator, Action<byte[]> action)
     {
         Name = name;
+        if (isNameCreator)
+        {
+            _mmFile = MemoryMappedFile.CreateNew(name, Setting.SharedMemorySize);
+        }
+        else
+        {
 #pragma warning disable CA1416 // Validate platform compatibility
-        _mmFile = MemoryMappedFile.OpenExisting(name);
+            _mmFile = MemoryMappedFile.OpenExisting(name);
 #pragma warning restore CA1416 // Validate platform compatibility
+        }
         _accessor = _mmFile.CreateViewAccessor();
         _pointer = _accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
+        _action = action;
+        new Thread(StartWorker).Start();
     }
 
     public MemoryMappedViewAccessor DataReceivedMemoryAccessors
@@ -76,7 +78,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     }
 
     // check the index access
-    public unsafe void SendDataAsync(byte[] data)
+    public unsafe void SendData(byte[] data)
     {
         var context = (byte*)_pointer.ToPointer();
         if (data.Length > Setting.SharedMemorySize)
@@ -96,20 +98,17 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
         else
         {
-            Marshal.Copy(data, 0, _pointer + 1, data.Length);
-            context[0] = 1;
+            while (true)
+            {
+                if (IsDisposed || context[0] == 0)
+                {
+                    Marshal.Copy(data, 0, _pointer + 1, data.Length);
+                    context[0] = 1;
+                    break;
+                }
+            }
         }
     }
-
-    public void ReceiveData(Action<byte[]> action)
-    {
-        if (action != null)
-            throw new MultipleCallingException();
-
-        _action = action;
-        new Thread(StartWorker).Start();
-    }
-
 
     public unsafe void StartWorker()
     {
@@ -117,9 +116,13 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         Debug.Assert(_action != null);
         while (true)
         {
+            if (IsDisposed)
+                break;
             if (context[0] != 1)
                 continue;
 
+
+            Thread.MemoryBarrier();
             var data = new byte[Setting.SharedMemorySize];
             Marshal.Copy(_pointer + 1, data, 0, Setting.SharedMemorySize);
             _action.Invoke(data);

@@ -7,6 +7,5 @@ using System.Threading.Tasks;
 namespace API.Processors.Communication;
 internal interface ICommunication
 {
-    void SendDataAsync(byte[] data);
-    void ReceiveData(Action<byte[]> action);
+    void SendData(byte[] data);
 }
