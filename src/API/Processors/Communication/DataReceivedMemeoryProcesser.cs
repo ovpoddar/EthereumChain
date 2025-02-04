@@ -20,12 +20,15 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     public bool IsDisposed { get; private set; }
     public string Name { get; }
 
-    readonly MemoryMappedFile _mmFile;
-    readonly MemoryMappedViewAccessor _accessor;
-    unsafe IntPtr _pointer;
+    private readonly MemoryMappedFile _mmFile;
+    private readonly MemoryMappedViewAccessor _accessor;
+    private unsafe IntPtr _pointer;
+    private readonly int _writeableSize;
     private readonly Action<byte[]> _action;
+
     public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator, Action<byte[]> action)
     {
+        _writeableSize = Setting.SharedMemorySize - sizeof(byte) - sizeof(int);
         Name = name;
         if (isNameCreator)
         {
@@ -81,15 +84,17 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     public unsafe void SendData(byte[] data)
     {
         var context = (byte*)_pointer.ToPointer();
-        if (data.Length > Setting.SharedMemorySize)
+        if (data.Length > _writeableSize)
         {
             var totalWritten = 0;
             while (totalWritten != data.Length)
             {
                 if (context[0] == 0)
                 {
-                    var writeSize = Math.Min(data.Length - totalWritten, Setting.SharedMemorySize);
-                    Marshal.Copy(data[totalWritten..writeSize], totalWritten, _pointer + 1, writeSize);
+                    Marshal.Copy(data,
+                        totalWritten,
+                        _pointer + sizeof(int) + sizeof(byte),
+                        Math.Min(data.Length - totalWritten, _writeableSize));
                     context[0] = 1;
                 }
                 Task.Delay(100).Wait();
@@ -102,7 +107,10 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
             {
                 if (IsDisposed || context[0] == 0)
                 {
-                    Marshal.Copy(data, 0, _pointer + 1, data.Length);
+                    Marshal.Copy(data,
+                        0,
+                        _pointer + sizeof(int) + sizeof(byte),
+                        data.Length);
                     context[0] = 1;
                     break;
                 }
@@ -124,7 +132,10 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 
             Thread.MemoryBarrier();
             var data = new byte[Setting.SharedMemorySize];
-            Marshal.Copy(_pointer + 1, data, 0, Setting.SharedMemorySize);
+            Marshal.Copy(_pointer + sizeof(int) + sizeof(byte),
+                data, 
+                0,
+                Setting.SharedMemorySize);
             _action.Invoke(data);
             context[0] = 0;
         }
@@ -132,7 +143,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 }
 
 
-/************************************************************************************************************************************************************************************
+/*******************************************************************************************
 Sender class:
     has a method which takes the data.
 
@@ -159,4 +170,4 @@ after binding the callback. it will run a continuous loop to check the state of 
 ^
 checking this value if it is 1 then read the data and raise the event
 and also have to set the value to 0 after reading the data
-************************************************************************************************************************************************************************************/
+********************************************************************************************/
