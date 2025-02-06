@@ -8,10 +8,13 @@ using System.Data.SQLite;
 using System.Net;
 using System.Net.Sockets;
 using API.Processors.WebSocket;
+using Shared;
+using Shared.Processors.Communication;
 
 using (var sqlConnection = InitializedDatabase())
 using (var httpListener = new HttpListener())
-await using (var webSocketListener = new MinerSocketProcessor(sqlConnection))
+using (var communication = new DataReceivedMemoryProcessor("EthereumChain", true))
+await using (var webSocketListener = new MinerSocketProcessor(sqlConnection, communication))
 {
 
 
@@ -22,14 +25,14 @@ await using (var webSocketListener = new MinerSocketProcessor(sqlConnection))
     httpListener.Start();
     foreach (var item in httpListener.Prefixes)
         Console.WriteLine($"RPC Application is listening on {item}");
-    Console.WriteLine($"Miner application listening on ws://http://127.0.0.1:{Setting.RPCPort}");
+    Console.WriteLine($"Miner application listening on ws://127.0.0.1:{Setting.RPCPort}");
 
     await StructureProcesser.MigrationStructure(sqlConnection);
     httpListener.BeginGetContext(ReceivedRequest, new ProcessorModel(httpListener, webSocketListener, sqlConnection));
     Console.ReadLine();
 }
 
-async void ReceivedRequest(IAsyncResult ar)
+static async void ReceivedRequest(IAsyncResult ar)
 {
     if (ar.AsyncState is not ProcessorModel requestProcesser)
         return;

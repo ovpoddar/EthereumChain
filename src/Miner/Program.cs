@@ -5,6 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Processors.Communication;
 
 // todo want to use share memory to communicate with the API project
 await Host.CreateDefaultBuilder(args)
@@ -16,6 +17,7 @@ await Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
     {
         services.AddHostedService<MinerWorker>();
+        services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
     })
     .Build()
     .RunAsync();

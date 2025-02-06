@@ -1,5 +1,5 @@
-﻿using API.Exceptions;
-using API.Models;
+﻿using Shared.Exceptions;
+using Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,16 +11,16 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Collections.Specialized.BitVector32;
 
-namespace API.Processors.Communication;
+namespace Shared.Processors.Communication;
 
-internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
+public class DataReceivedMemoryProcessor : IDisposable, ICommunication
 {
-    private readonly Lock DisposeLock = new Lock();
+    private readonly object DisposeLock = new();
     public bool IsDisposed { get; private set; }
 
     private readonly MemoryMappedFile _mmFile;
     private readonly MemoryMappedViewAccessor _accessor;
-    private unsafe IntPtr _pointer;
+    private unsafe nint _pointer;
     private readonly int _writeableSize;
     private readonly ushort _processId;
 
@@ -50,7 +50,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         get { EnsureNotDisposed(); return _accessor; }
     }
 
-    private unsafe IntPtr Pointer
+    private unsafe nint Pointer
     {
         get { EnsureNotDisposed(); return _pointer; }
     }
@@ -68,15 +68,13 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     public unsafe void Dispose()
     {
         lock (DisposeLock)
-        {
             if (!IsDisposed)
             {
                 IsDisposed = true;
                 _accessor.Dispose();
                 _mmFile.Dispose();
-                _pointer = IntPtr.Zero;
+                _pointer = nint.Zero;
             }
-        }
     }
 
     public unsafe void SendData(byte[] data)

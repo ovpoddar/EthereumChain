@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared;
+namespace Shared.Models;
 public readonly ref struct RequestEvent
 {
     public MinerEventsTypes EventType { get; }

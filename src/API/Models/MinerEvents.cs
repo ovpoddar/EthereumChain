@@ -1,5 +1,5 @@
-﻿using Shared;
-using Shared.Core;
+﻿using Shared.Core;
+using Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

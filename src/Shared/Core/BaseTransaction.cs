@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Shared.Models;
+using System.Diagnostics;
 using System.Text;
 
 namespace Shared.Core;

@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API;
-internal static class Setting
+namespace Shared;
+public static class Setting
 {
     private static readonly ushort NetWorkId = 6;
     // check all the chain list in https://chainid.network/

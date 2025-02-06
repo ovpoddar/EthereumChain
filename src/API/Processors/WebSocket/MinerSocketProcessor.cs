@@ -1,24 +1,28 @@
 ﻿using API.Handlers;
 using API.Models;
+using Shared.Processors.Communication;
 using NBitcoin.Secp256k1;
-using Shared;
+using Shared.Models;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
+using Shared;
 
 namespace API.Processors.WebSocket;
 internal class MinerSocketProcessor : IAsyncDisposable
 {
     private readonly List<System.Net.WebSockets.WebSocket> _minerConnections;
     private readonly SQLiteConnection _sqlConnection;
+    private readonly ICommunication _communication;
 
-    public MinerSocketProcessor(SQLiteConnection sqlConnection)
+    public MinerSocketProcessor(SQLiteConnection sqlConnection, ICommunication communication)
     {
         this._minerConnections = new(Setting.MinerNetworkCount);
         this._sqlConnection = sqlConnection;
+        _communication = communication;
     }
 
     public async Task<System.Net.WebSockets.WebSocket?> HandleExpandNetworkAsync(HttpListenerContext context)
@@ -73,7 +77,7 @@ internal class MinerSocketProcessor : IAsyncDisposable
                                     // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);
                                     break;
                                 case MinerEventsTypes.BlockGenerated:
-                                    RequestHandler.ProcessGeneratedBlock(ref data, _sqlConnection);
+                                    RequestHandler.ProcessGeneratedBlock(ref data, _communication);
                                     break;
                                 case MinerEventsTypes.BlockConfirmed:
                                     // MinerEvents.RaisedMinerEvent(response.EventType, response.EventValue);

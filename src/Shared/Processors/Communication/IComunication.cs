@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Processors.Communication;
-internal interface ICommunication
+namespace Shared.Processors.Communication;
+public interface ICommunication
 {
     void SendData(byte[] data);
     void ReceivedData(Action<byte[]> action);

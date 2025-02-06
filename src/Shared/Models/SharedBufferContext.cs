@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace API.Models;
+namespace Shared.Models;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct SharedBufferContext

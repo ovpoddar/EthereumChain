@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared;
+namespace Shared.Models;
 public abstract class MinerEventArgs : EventArgs
 {
     public abstract ushort GetWrittenByteSize();

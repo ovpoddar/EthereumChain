@@ -1,10 +1,13 @@
 ﻿using API.Models;
+using Shared.Processors.Communication;
 using API.Processors.WebSocket;
 using Nethereum.Merkle.Patricia;
 using Newtonsoft.Json.Linq;
 using Shared;
 using Shared.Core;
+using Shared.Models;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
@@ -60,8 +63,10 @@ internal static class RequestHandler
         }
     }
 
-    internal static void ProcessGeneratedBlock(ref Span<byte> data, SQLiteConnection sqlConnection)
+    internal static void ProcessGeneratedBlock(ref Span<byte> data, ICommunication communication)
     {
-        throw new NotImplementedException();
+        var VerifiableData = ArrayPool<byte>.Shared.Rent(data.Length);
+        communication.SendData(VerifiableData[0..(data.Length-1)]);
+        ArrayPool<byte>.Shared.Return(VerifiableData);
     }
 }
