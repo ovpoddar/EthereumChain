@@ -30,7 +30,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
     // TODO:FIX multipal reader causing deadlock
     public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator, Action<byte[]> action)
     {
-        _writeableSize = Setting.SharedMemorySize - Marshal.SizeOf<SharedBuffer>();
+        _writeableSize = Setting.SharedMemorySize - Marshal.SizeOf<SharedBufferContext>();
         Name = name;
         if (isNameCreator)
         {
@@ -84,7 +84,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 
     public unsafe void SendData(byte[] data)
     {
-        var context = (SharedBuffer*)_pointer.ToPointer();
+        var context = (SharedBufferContext*)_pointer.ToPointer();
         var totalWritten = 0;
         var isContextNotWritten = true;
 
@@ -104,7 +104,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
             var writtenLength = Math.Min(data.Length - totalWritten, _writeableSize);
             Marshal.Copy(data,
                 totalWritten,
-                _pointer + Marshal.SizeOf<SharedBuffer>(),
+                _pointer + Marshal.SizeOf<SharedBufferContext>(),
                 writtenLength);
             totalWritten += writtenLength;
             context->State = 1;
@@ -113,7 +113,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 
     public unsafe void StartWorker()
     {
-        var context = (SharedBuffer*)_pointer.ToPointer();
+        var context = (SharedBufferContext*)_pointer.ToPointer();
         var read = 0;
         byte[] data = [];
         while (true)
@@ -130,7 +130,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 
             var readSize = Math.Min(context->Size - read, _writeableSize);
 
-            Marshal.Copy(_pointer + Marshal.SizeOf<SharedBuffer>(),
+            Marshal.Copy(_pointer + Marshal.SizeOf<SharedBufferContext>(),
                    data,
                    read,
                    readSize);
