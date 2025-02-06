@@ -12,22 +12,21 @@ using System.Threading.Tasks;
 using static System.Collections.Specialized.BitVector32;
 
 namespace API.Processors.Communication;
-/// <summary>
-/// <remarks>this is not thread safe.</remarks>
-/// </summary>
+
 internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 {
-    public object DisposeLock = new object();
+    private readonly Lock DisposeLock = new Lock();
     public bool IsDisposed { get; private set; }
 
     private readonly MemoryMappedFile _mmFile;
     private readonly MemoryMappedViewAccessor _accessor;
     private unsafe IntPtr _pointer;
     private readonly int _writeableSize;
-    private readonly Action<byte[]> _action;
     private readonly ushort _processId;
 
-    public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator, Action<byte[]> action)
+    private Action<byte[]>? _action;
+
+    public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator)
     {
         _writeableSize = Setting.SharedMemorySize - Marshal.SizeOf<SharedBufferContext>();
         if (isNameCreator)
@@ -44,16 +43,14 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
         _accessor = _mmFile.CreateViewAccessor();
         _pointer = _accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
-        _action = action;
-        new Thread(StartWorker).Start();
     }
 
-    public MemoryMappedViewAccessor DataReceivedMemoryAccessors
+    private MemoryMappedViewAccessor DataReceivedMemoryAccessors
     {
         get { EnsureNotDisposed(); return _accessor; }
     }
 
-    public unsafe IntPtr Pointer
+    private unsafe IntPtr Pointer
     {
         get { EnsureNotDisposed(); return _pointer; }
     }
@@ -68,7 +65,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
     }
 
-    unsafe public void Dispose()
+    public unsafe void Dispose()
     {
         lock (DisposeLock)
         {
@@ -112,7 +109,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
     }
 
-    public unsafe void StartWorker()
+    private unsafe void StartWorker()
     {
         var context = (SharedBufferContext*)_pointer.ToPointer();
         var read = 0;
@@ -147,4 +144,10 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         }
     }
 
+    public void ReceivedData(Action<byte[]> action)
+    {
+        if (_action != null) throw new MultipleCallingException();
+        _action = action;
+        new Thread(StartWorker).Start();
+    }
 }

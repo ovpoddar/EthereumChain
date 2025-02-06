@@ -8,4 +8,5 @@ namespace API.Processors.Communication;
 internal interface ICommunication
 {
     void SendData(byte[] data);
+    void ReceivedData(Action<byte[]> action);
 }
