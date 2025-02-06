@@ -19,27 +19,27 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 {
     public object DisposeLock = new object();
     public bool IsDisposed { get; private set; }
-    public string Name { get; }
 
     private readonly MemoryMappedFile _mmFile;
     private readonly MemoryMappedViewAccessor _accessor;
     private unsafe IntPtr _pointer;
     private readonly int _writeableSize;
     private readonly Action<byte[]> _action;
+    private readonly ushort _processId;
 
-    // TODO:FIX multipal reader causing deadlock
     public unsafe DataReceivedMemoryProcessor(string name, bool isNameCreator, Action<byte[]> action)
     {
         _writeableSize = Setting.SharedMemorySize - Marshal.SizeOf<SharedBufferContext>();
-        Name = name;
         if (isNameCreator)
         {
             _mmFile = MemoryMappedFile.CreateNew(name, Setting.SharedMemorySize);
+            _processId = 0;
         }
         else
         {
 #pragma warning disable CA1416 // Validate platform compatibility
             _mmFile = MemoryMappedFile.OpenExisting(name);
+            _processId = 1;
 #pragma warning restore CA1416 // Validate platform compatibility
         }
         _accessor = _mmFile.CreateViewAccessor();
@@ -107,6 +107,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
                 _pointer + Marshal.SizeOf<SharedBufferContext>(),
                 writtenLength);
             totalWritten += writtenLength;
+            context->ProcessId = _processId;
             context->State = 1;
         }
     }
@@ -120,7 +121,7 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
         {
             if (IsDisposed)
                 break;
-            if (context->State != 1)
+            if (context->State != 1 || context->ProcessId != _processId)
                 continue;
 
             Thread.MemoryBarrier();
@@ -138,8 +139,9 @@ internal class DataReceivedMemoryProcessor : IDisposable, ICommunication
 
             if (context->IsContinues == 0 || context->Size == read)
             {
-                read = 0;
                 _action!.Invoke(data);
+                read = 0;
+                data = [];
             }
             context->State = 0;
         }

@@ -10,4 +10,5 @@ public struct SharedBufferContext
     public int Size;
     // 0 - false, 1 - true
     public byte IsContinues;
+    public ushort ProcessId;
 }
