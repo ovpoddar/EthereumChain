@@ -3,14 +3,17 @@
 //
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Processors.Communication;
 
 internal class MinerWorker : BackgroundService
 {
     private readonly ILogger<MinerWorker> _logger;
+    private readonly ICommunication _communication;
 
-    public MinerWorker(ILogger<MinerWorker> logger)
+    public MinerWorker(ILogger<MinerWorker> logger, ICommunication _communication)
     {
         this._logger = logger;
+        this._communication = _communication;
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

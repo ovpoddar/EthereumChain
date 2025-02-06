@@ -1,6 +1,7 @@
 ﻿using API;
 using API.Handlers;
 using API.Models;
+using Shared;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
@@ -44,7 +45,12 @@ internal static class ResponseProcessor
                 var estimateGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
                 break;
-           
+            /*
+            case "eth_getTransactionCount":
+                var transectionDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
+                response.Write(RequestHandler.ProcessEthGetTransactionCount(transectionDetails[0], transectionDetails[1], sqLiteConnection));
+                break;
+            */
             case "eth_sendRawTransaction":
                 var transactionDetailsRange = RequestSerializer.GetArrayAs<Range>(ref requestContext, "params", 1);
                 var transactionDetails = requestContext[transactionDetailsRange[0]];

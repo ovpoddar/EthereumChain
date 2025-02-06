@@ -6,18 +6,27 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Shared.Processors.Communication;
+var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
+{
+    ApplicationName = "Miner",
+    ContentRootPath = Directory.GetCurrentDirectory(),
+    Args = args,
+    DisableDefaults = true,
+    Configuration = null
+});
 
-// todo want to use share memory to communicate with the API project
-await Host.CreateDefaultBuilder(args)
-    .ConfigureLogging(logging =>
-    {
-        logging.ClearProviders();
-        logging.AddConsole();
-    })
-    .ConfigureServices((hostContext, services) =>
-    {
-        services.AddHostedService<MinerWorker>();
-        services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
-    })
-    .Build()
-    .RunAsync();
+builder.Logging
+    .ClearProviders()
+    .AddConsole()
+    .AddDebug();
+
+builder.Services.AddHostedService<MinerWorker>();
+builder.Services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
+
+var app = builder.Build();
+var communication = app.Services.GetRequiredService<ICommunication>();
+communication.ReceivedData((data) =>
+{
+    Console.WriteLine("Received data: {0}", data);
+});
+await app.RunAsync();
