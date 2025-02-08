@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Shared.Processors.Communication;
+
 var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
 {
     ApplicationName = "Miner",
@@ -27,6 +28,7 @@ var app = builder.Build();
 var communication = app.Services.GetRequiredService<ICommunication>();
 communication.ReceivedData((data) =>
 {
+    // for internal communication use the channel or weakreference
     Console.WriteLine("Received data: {0}", data);
 });
 await app.RunAsync();

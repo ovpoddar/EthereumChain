@@ -4,6 +4,7 @@ using API.Processors;
 using Shared;
 using Shared.Core;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -32,9 +33,23 @@ internal class ResponseProcessor
         Console.WriteLine("Something happend.");
     }
 
-    private void MinerEvents_Block_Generated(object? sender, EventArgs e)
+    // todo: Refactor this later
+    private async void MinerEvents_Block_Generated(object? sender, BaseBlock e)
     {
-        Console.WriteLine("Something happend.");
+        var allocatedBytes = e.GetWrittenByteSize();
+        if (allocatedBytes >= 1024)
+        {
+            Span<byte> context = stackalloc byte[allocatedBytes];
+            var requestEvent = e.GetRequestEvent(context);
+            await _webSocketListener.NotifyAll(requestEvent);
+        }
+        else
+        {
+            var context = ArrayPool<byte>.Shared.Rent(allocatedBytes);
+            var requestEvent = e.GetRequestEvent(context);
+            await _webSocketListener.NotifyAll(requestEvent);
+            ArrayPool<byte>.Shared.Return(context);
+        }
     }
 
     private void MinerEvents_Transaction_Updated(object? sender, EventArgs e)

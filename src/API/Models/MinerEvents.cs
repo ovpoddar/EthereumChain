@@ -11,7 +11,7 @@ internal struct MinerEvents
 {
     public static event EventHandler<BaseTransaction>? Transaction_Added;
     public static event EventHandler? Transaction_Updated;
-    public static event EventHandler? Block_Generated;
+    public static event EventHandler<BaseBlock>? Block_Generated;
     public static event EventHandler? Block_Confirmed;
 
     public static void RaisedMinerEvent(MinerEventsTypes minerEvents, MinerEventArgs eventArgs)
@@ -25,7 +25,7 @@ internal struct MinerEvents
                 Transaction_Updated?.Invoke(null, null);
                 break;
             case MinerEventsTypes.BlockGenerated:
-                Block_Generated?.Invoke(null, null);
+                Block_Generated?.Invoke(null, eventArgs as BaseBlock ?? throw new Exception("invalid data found."));
                 break;
             case MinerEventsTypes.BlockConfirmed:
                 Block_Confirmed?.Invoke(null, null);

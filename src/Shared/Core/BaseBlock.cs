@@ -12,7 +12,7 @@ namespace Shared.Core;
 public class BaseBlock : MinerEventArgs
 {
     public int Number { get; set; }
-    public string Hash { get; set; }
+    public string Hash { get => CalculateHash(); }
     public string ParentHash { get; set; }
     public long Nonce { get; set; }
     public string Sha3Uncles { get; set; }
@@ -81,7 +81,7 @@ public class BaseBlock : MinerEventArgs
         context[writingIndex++] = 0;
 
         writingIndex += Encoding.UTF8.GetBytes(TransactionsRoot, context[writingIndex..]);
-        context[writingIndex++] = 0; 
+        context[writingIndex++] = 0;
 
         writingIndex += Encoding.UTF8.GetBytes(StateRoot, context[writingIndex..]);
         context[writingIndex++] = 0;
@@ -134,4 +134,79 @@ public class BaseBlock : MinerEventArgs
         return BitConverter.ToString(bytes).Replace("-", "");
     }
 
+    // todo: test this reading. finished by gpt
+    public BaseBlock(ReadOnlySpan<byte> data)
+    {
+        var readIndex = 0;
+
+        this.Number = BinaryPrimitives.ReadInt32BigEndian(data[readIndex..]);
+        readIndex += sizeof(int) + 1;
+
+        var readEndIndex = data[readIndex..].IndexOf((byte)0);
+        var hash = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.ParentHash = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        this.Nonce = BinaryPrimitives.ReadInt64BigEndian(data[readIndex..]);
+        readIndex += sizeof(long) + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.Sha3Uncles = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.LogsBloom = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.TransactionsRoot = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.StateRoot = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.ReceiptsRoot = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.Difficulty = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.TotalDifficulty = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.ExtraData = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.Size = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        this.GasLimit = BinaryPrimitives.ReadUInt64BigEndian(data[readIndex..]);
+        readIndex += sizeof(ulong) + 1;
+
+        this.GasUsed = BinaryPrimitives.ReadUInt64BigEndian(data[readIndex..]);
+        readIndex += sizeof(ulong) + 1;
+
+        this.TimeStamp = BinaryPrimitives.ReadInt64BigEndian(data[readIndex..]);
+        readIndex += sizeof(long) + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        var transactionsStr = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        this.Transactions = transactionsStr.Split(' ')
+            .Select(t => t.Split(':'))
+            .Select(parts => new BaseTransaction(Guid.Parse(parts[0]), parts[1]))
+            .ToList();
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.Uncles = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+    }
 }
