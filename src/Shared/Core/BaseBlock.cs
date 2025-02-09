@@ -1,4 +1,5 @@
-﻿using Shared.Models;
+﻿using Shared.Helpers;
+using Shared.Models;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -31,11 +32,13 @@ public class BaseBlock : MinerEventArgs
     public List<BaseTransaction> Transactions { get; }
     public string Uncles { get; set; }
 
+    // really don't want it but don't have a good idea to avoid it
+    private string ComposeTransactionString() =>
+        string.Join(' ', Transactions.Select(a => $"{a.TransactionId}:{a.RawTransaction.EncodingForNetworkTransfer()}"));
 
     public override ushort GetWrittenByteSize()
     {
-        // really don't want it but don't have a good idea to avoid it
-        var transactionStr = string.Join(' ', Transactions.Select(a => $"{a.TransactionId}: {a.RawTransaction}"));
+        var transactionStr = ComposeTransactionString();
         return (ushort)(55
             + Encoding.UTF8.GetByteCount(Hash)
             + Encoding.UTF8.GetByteCount(ParentHash)
@@ -54,7 +57,6 @@ public class BaseBlock : MinerEventArgs
         ;
     }
 
-    // todo: test this writing
     public override RequestEvent GetRequestEvent(Span<byte> context)
     {
         Debug.Assert(context.Length > 55);
@@ -116,7 +118,7 @@ public class BaseBlock : MinerEventArgs
         writingIndex += sizeof(long);
         context[writingIndex++] = 0;
 
-        var transactionStr = string.Join(' ', Transactions.Select(a => $"{a.TransactionId}: {a.RawTransaction}"));
+        var transactionStr = ComposeTransactionString();
         writingIndex += Encoding.UTF8.GetBytes(transactionStr, context[writingIndex..]);
         context[writingIndex++] = 0;
 
@@ -134,7 +136,6 @@ public class BaseBlock : MinerEventArgs
         return BitConverter.ToString(bytes).Replace("-", "");
     }
 
-    // todo: test this reading. finished by gpt
     public BaseBlock(ReadOnlySpan<byte> data)
     {
         var readIndex = 0;
@@ -174,6 +175,10 @@ public class BaseBlock : MinerEventArgs
         readIndex += readEndIndex + 1;
 
         readEndIndex = data[readIndex..].IndexOf((byte)0);
+        this.Miner = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        readIndex += readEndIndex + 1;
+
+        readEndIndex = data[readIndex..].IndexOf((byte)0);
         this.Difficulty = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
         readIndex += readEndIndex + 1;
 
@@ -202,7 +207,7 @@ public class BaseBlock : MinerEventArgs
         var transactionsStr = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
         this.Transactions = transactionsStr.Split(' ')
             .Select(t => t.Split(':'))
-            .Select(parts => new BaseTransaction(Guid.Parse(parts[0]), parts[1]))
+            .Select(parts => new BaseTransaction(Guid.Parse(parts[0]), parts[1].DecodingFormNetworkTransfer()))
             .ToList();
         readIndex += readEndIndex + 1;
 

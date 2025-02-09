@@ -137,4 +137,10 @@ internal static class Utilities
 
     public static T ToStruct<T>(this Span<byte> @bytes) where T : struct =>
         Unsafe.As<byte, T>(ref @bytes[0]);
+
+    public static string EncodingForNetworkTransfer(this string value) =>
+        value.Replace(" ", "&nbsp;");
+
+    public static string DecodingFormNetworkTransfer(this string value) =>
+        value.Replace("&nbsp;", " ");
 }
