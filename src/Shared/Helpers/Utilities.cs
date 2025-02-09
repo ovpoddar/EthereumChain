@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Shared.Helpers;
-internal static class Utilities
+public static class Utilities
 {
     public static string EnsureEndsWith(this string value,
         string suffix,

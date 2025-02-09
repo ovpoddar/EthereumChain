@@ -3,7 +3,6 @@ using Shared.Processors.Communication;
 using API.Processors.WebSocket;
 using Nethereum.Merkle.Patricia;
 using Newtonsoft.Json.Linq;
-using Shared;
 using Shared.Core;
 using Shared.Models;
 using System;
@@ -65,8 +64,13 @@ internal static class RequestHandler
 
     internal static void ProcessGeneratedBlock(ref Span<byte> data, ICommunication communication)
     {
-        var VerifiableData = ArrayPool<byte>.Shared.Rent(data.Length);
-        communication.SendData(VerifiableData[0..(data.Length-1)]);
-        ArrayPool<byte>.Shared.Return(VerifiableData);
+        var baseBlock = new BaseBlock(data);
+        MinerEvents.RaisedMinerEvent(MinerEventsTypes.BlockGenerated, baseBlock);
+
+        var sendingDataWithContext = ArrayPool<byte>.Shared.Rent(data.Length + 1);
+        sendingDataWithContext[0] = (byte)CommunicationDataType.BaseBlock;
+        data.CopyTo(sendingDataWithContext.AsSpan()[1..]);
+        communication.SendData(sendingDataWithContext);
+        ArrayPool<byte>.Shared.Return(sendingDataWithContext);
     }
 }
