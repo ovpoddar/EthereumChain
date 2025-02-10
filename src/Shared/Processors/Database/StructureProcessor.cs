@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Shared;
+using Shared.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace API.Processors.Database;
-internal static class StructureProcesser
+namespace Shared.Processors.Database;
+public static class StructureProcessor
 {
     public static async Task MigrationStructure(SQLiteConnection connection)
     {
@@ -52,5 +54,14 @@ internal static class StructureProcesser
         await transactionCommand.ExecuteNonQueryAsync();
 
         await connection.CloseAsync();
+    }
+
+
+    public static SQLiteConnection InitializedDatabase()
+    {
+        var file = Setting.EthereumChainStoragePath.EnsureEndsWith(".sqlite", StringComparison.OrdinalIgnoreCase);
+        if (!File.Exists(file))
+            SQLiteConnection.CreateFile(file);
+        return new SQLiteConnection($"Data Source={file};Version=3;");
     }
 }

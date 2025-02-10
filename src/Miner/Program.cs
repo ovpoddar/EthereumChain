@@ -5,6 +5,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Core;
 using Shared.Models;
 using Shared.Processors.Communication;
 
@@ -31,8 +32,13 @@ communication.ReceivedData((data) =>
 {
     if (data[0] == (byte)CommunicationDataType.BaseBlock)
     {
-        // process the block
-        Console.WriteLine("Received data length: {0},\n type of result {1} ", data.Length, (CommunicationDataType)data[0]);
+        var block = new BaseBlock(data.AsSpan(1));
+        var calculatedHash = block.CalculateHash();
+        if (calculatedHash == block.Hash)
+        {
+            // process the block
+            Console.WriteLine("Received data length: {0},\n type of result {1} ", data.Length, (CommunicationDataType)data[0]);
+        }
     }
 
     // for internal communication use the channel or weakreference

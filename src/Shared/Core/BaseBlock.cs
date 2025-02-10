@@ -13,7 +13,7 @@ namespace Shared.Core;
 public class BaseBlock : MinerEventArgs
 {
     public int Number { get; set; }
-    public string Hash { get => CalculateHash(); }
+    public string Hash { get; set; }
     public string ParentHash { get; set; }
     public long Nonce { get; set; }
     public string Sha3Uncles { get; set; }
@@ -144,7 +144,7 @@ public class BaseBlock : MinerEventArgs
         readIndex += sizeof(int) + 1;
 
         var readEndIndex = data[readIndex..].IndexOf((byte)0);
-        var hash = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
+        this.Hash = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
         readIndex += readEndIndex + 1;
 
         readEndIndex = data[readIndex..].IndexOf((byte)0);

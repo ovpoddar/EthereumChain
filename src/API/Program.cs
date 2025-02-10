@@ -2,7 +2,7 @@
 using Shared.Helpers;
 using API.Helpers;
 using API.Models;
-using API.Processors.Database;
+using Shared.Processors.Database;
 using HTTP = API.Processors.HTTP;
 using System.Data.SQLite;
 using System.Net;
@@ -12,7 +12,7 @@ using Shared;
 using Shared.Processors.Communication;
 using API.Handlers;
 
-using (var sqlConnection = InitializedDatabase())
+using (var sqlConnection = StructureProcessor.InitializedDatabase())
 using (var httpListener = new HttpListener())
 using (var communication = new DataReceivedMemoryProcessor("EthereumChain", true))
 await using (var webSocketListener = new MinerSocketProcessor(sqlConnection, communication))
@@ -28,7 +28,7 @@ await using (var webSocketListener = new MinerSocketProcessor(sqlConnection, com
         Console.WriteLine($"RPC Application is listening on {item}");
     Console.WriteLine($"Miner application listening on ws://127.0.0.1:{Setting.RPCPort}");
 
-    await StructureProcesser.MigrationStructure(sqlConnection);
+    await StructureProcessor.MigrationStructure(sqlConnection);
     httpListener.BeginGetContext(ReceivedRequest, new ProcessorModel(httpListener, webSocketListener, sqlConnection));
     Console.ReadLine();
 }
@@ -80,12 +80,4 @@ static async void ReceivedRequest(IAsyncResult ar)
     context.Response.OutputStream.Write("hello World! we're listening"u8);
     context.Response.OutputStream.Close();
     requestProcesser.Listener.BeginGetContext(ReceivedRequest, requestProcesser);
-}
-
-static SQLiteConnection InitializedDatabase()
-{
-    var file = Setting.EthereumChainStoragePath.EnsureEndsWith(".sqlite", StringComparison.OrdinalIgnoreCase);
-    if (!File.Exists(file))
-        SQLiteConnection.CreateFile(file);
-    return new SQLiteConnection($"Data Source={file};Version=3;");
 }
