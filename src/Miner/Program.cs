@@ -5,9 +5,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Miner.Processors;
 using Shared.Core;
 using Shared.Models;
 using Shared.Processors.Communication;
+using Shared.Processors.Database;
+using System.Data.SQLite;
 
 var builder = Host.CreateEmptyApplicationBuilder(new HostApplicationBuilderSettings
 {
@@ -25,24 +28,11 @@ builder.Logging
 
 builder.Services.AddHostedService<MinerWorker>();
 builder.Services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
+builder.Services.AddSingleton(StructureProcessor.InitializedDatabase());
 
 var app = builder.Build();
-var communication = app.Services.GetRequiredService<ICommunication>();
-communication.ReceivedData((data) =>
-{
-    if (data[0] == (byte)CommunicationDataType.BaseBlock)
-    {
-        var block = new BaseBlock(data.AsSpan(1));
-        var calculatedHash = block.CalculateHash();
-        if (calculatedHash == block.Hash)
-        {
-            // process the block
-            Console.WriteLine("Received data length: {0},\n type of result {1} ", data.Length, (CommunicationDataType)data[0]);
-        }
-    }
 
-    // for internal communication use the channel or weakreference
-    // block generated or confirmed
-    // process it
-});
+var communication = app.Services.GetRequiredService<ICommunication>();
+var connection = app.Services.GetRequiredService<SQLiteConnection>();
+communication.ReceivedData((data) => MinerEventProcessor.ProcessEvent(communication, connection, data));
 await app.RunAsync();

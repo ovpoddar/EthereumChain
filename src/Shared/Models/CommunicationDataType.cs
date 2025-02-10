@@ -7,5 +7,6 @@ using System.Threading.Tasks;
 namespace Shared.Models;
 public enum CommunicationDataType : byte
 {
-    BaseBlock
+    BaseBlock,
+    Confirmation
 }
