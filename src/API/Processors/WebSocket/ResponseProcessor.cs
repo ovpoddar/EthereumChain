@@ -1,4 +1,5 @@
-﻿ using API.Handlers;
+﻿using API.Handlers;
+using API.Helpers;
 using API.Models;
 using API.Processors;
 using Shared;
@@ -45,10 +46,9 @@ internal class ResponseProcessor
         }
         else
         {
-            var context = ArrayPool<byte>.Shared.Rent(allocatedBytes);
+            using var context = new ArrayPoolUsing<byte>(allocatedBytes);
             var requestEvent = e.GetRequestEvent(context);
             await _webSocketListener.NotifyAll(requestEvent);
-            ArrayPool<byte>.Shared.Return(context);
         }
     }
 

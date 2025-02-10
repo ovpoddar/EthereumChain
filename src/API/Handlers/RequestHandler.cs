@@ -13,6 +13,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using API.Helpers;
 
 namespace API.Handlers;
 internal static class RequestHandler
@@ -67,10 +69,9 @@ internal static class RequestHandler
         var baseBlock = new BaseBlock(data);
         MinerEvents.RaisedMinerEvent(MinerEventsTypes.BlockGenerated, baseBlock);
 
-        var sendingDataWithContext = ArrayPool<byte>.Shared.Rent(data.Length + 1);
+        using var sendingDataWithContext = new ArrayPoolUsing<byte>(data.Length + 1);
         sendingDataWithContext[0] = (byte)CommunicationDataType.BaseBlock;
-        data.CopyTo(sendingDataWithContext.AsSpan()[1..]);
+        data.CopyTo(sendingDataWithContext);
         communication.SendData(sendingDataWithContext);
-        ArrayPool<byte>.Shared.Return(sendingDataWithContext);
     }
 }
