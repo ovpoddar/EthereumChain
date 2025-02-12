@@ -44,4 +44,14 @@ public class Transaction
 
     public static implicit operator BaseTransaction(Transaction transaction) =>
         new BaseTransaction(transaction._id, transaction.RawTransaction);
+
+    public static bool IsValidTransaction(string transaction)
+    {
+        try
+        {
+            _ = TransactionFactory.CreateTransaction(transaction);
+            return true;
+        }
+        catch { return false; }
+    }
 }

@@ -15,13 +15,30 @@ internal static class MinerEventProcessor
     {
         if (data[0] == (byte)CommunicationDataType.BaseBlock)
         {
+
+            byte[] response =
+            [
+                (byte)CommunicationDataType.StatusBlock,
+                Convert.ToByte(false)
+            ];
+            
             var block = new BaseBlock(data.AsSpan(1));
             var calculatedHash = block.CalculateHash();
             if (calculatedHash == block.Hash)
             {
-                // process the block
-                // verify transactions...
-                Console.WriteLine(" ");
+                foreach (var item in block.Transactions)
+                {
+                    if (!Transaction.IsValidTransaction(item.RawTransaction))
+                    {
+                        communication.SendData(response);
+                        return;
+                    }
+                }
+
+                // verified tran
+                response[1] = Convert.ToByte(true);
+                communication.SendData(response);
+                // store it to database
             }
         }
 
