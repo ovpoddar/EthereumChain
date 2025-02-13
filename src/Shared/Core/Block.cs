@@ -9,18 +9,18 @@ public class Block
     public string Hash { get; set; }
     public string ParentHash { get; set; }
     public long Nonce { get; set; }
-    public string Sha3Uncles { get; set; }
-    public string LogsBloom { get; set; }
-    public string TransactionsRoot { get; set; }
-    public string StateRoot { get; set; }
-    public string ReceiptsRoot { get; set; }
+    public required string Sha3Uncles { get; set; }
+    public required string LogsBloom { get; set; }
+    public required string TransactionsRoot { get; set; }
+    public required string StateRoot { get; set; }
+    public required string ReceiptsRoot { get; set; }
     public string Miner { get; }
-    public string Difficulty { get; set; }
-    public string TotalDifficulty { get; set; }
-    public string ExtraData { get; set; }
-    public string Size { get; set; }
-    public string GasLimit { get; set; }
-    public string GasUsed { get; set; }
+    public required string Difficulty { get; set; }
+    public required string TotalDifficulty { get; set; }
+    public required string ExtraData { get; set; }
+    public required string Size { get; set; }
+    public ulong GasLimit { get; set; }
+    public ulong GasUsed { get; set; }
     public string TimeStamp { get; }
     public List<Transaction> Transactions { get; }
     public string[] Uncles { get; set; }
@@ -32,12 +32,14 @@ public class Block
         Transactions = [];
         ParentHash = parentHash;
         Nonce = 0;
+        Uncles = [];
     }
 
     public Block(byte[] block)
     {
 
     }
+
     public string CalculateHash()
     {
         var rawData = $"{Number} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";

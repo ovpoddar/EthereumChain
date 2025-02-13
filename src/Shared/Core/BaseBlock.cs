@@ -5,6 +5,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -216,9 +217,28 @@ public class BaseBlock : MinerEventArgs
     }
 
 
-    public static implicit operator Block(BaseBlock transaction)
+    public static implicit operator Block(BaseBlock baseBlock)
     {
-        // implemenr this oprator
-        throw new NotImplementedException();
+        var block = new Block(baseBlock.Miner, baseBlock.ParentHash)
+        {
+            Difficulty = baseBlock.Difficulty,
+            LogsBloom = baseBlock.LogsBloom,
+            ExtraData = baseBlock.ExtraData,
+            GasLimit = baseBlock.GasLimit,
+            GasUsed = baseBlock.GasUsed,
+            Hash = baseBlock.Hash,
+            Nonce = baseBlock.Nonce,
+            Number = baseBlock.Number,
+            ParentHash = baseBlock.ParentHash,
+            ReceiptsRoot = baseBlock.ReceiptsRoot,
+            Sha3Uncles = baseBlock.Sha3Uncles,
+            Size = baseBlock.Size,
+            StateRoot = baseBlock.StateRoot,
+            TotalDifficulty = baseBlock.TotalDifficulty,
+            Uncles = baseBlock.Uncles.Split(' '),
+            TransactionsRoot = baseBlock.TransactionsRoot
+        };
+        block.Transactions.AddRange([.. baseBlock.Transactions.Select(t => (Transaction)t)]);
+        return block;
     }
 }
