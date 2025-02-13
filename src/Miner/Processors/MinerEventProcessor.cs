@@ -1,17 +1,22 @@
-﻿using Shared.Core;
+﻿using Nethereum.Merkle.Patricia;
+using Shared.Core;
 using Shared.Models;
 using Shared.Processors.Communication;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Miner.Processors;
 internal static class MinerEventProcessor
 {
-    public static void ProcessEvent(ICommunication communication, SQLiteConnection connection, byte[] data)
+    public static async ValueTask ProcessEvent(ICommunication communication, BlockChain chain, byte[] data)
     {
         if (data[0] == (byte)CommunicationDataType.BaseBlock)
         {
@@ -21,7 +26,7 @@ internal static class MinerEventProcessor
                 (byte)CommunicationDataType.StatusBlock,
                 Convert.ToByte(false)
             ];
-            
+
             var block = new BaseBlock(data.AsSpan(1));
             var calculatedHash = block.CalculateHash();
             if (calculatedHash == block.Hash)
@@ -35,10 +40,10 @@ internal static class MinerEventProcessor
                     }
                 }
 
-                // verified tran
                 response[1] = Convert.ToByte(true);
                 communication.SendData(response);
-                // store it to database
+                await chain.AddBlock(block);
+
             }
         }
 

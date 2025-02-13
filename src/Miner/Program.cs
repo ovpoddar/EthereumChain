@@ -29,10 +29,11 @@ builder.Logging
 builder.Services.AddHostedService<MinerWorker>();
 builder.Services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
 builder.Services.AddSingleton(StructureProcessor.InitializedDatabase());
+builder.Services.AddSingleton<BlockChain>();
 
 var app = builder.Build();
 
 var communication = app.Services.GetRequiredService<ICommunication>();
-var connection = app.Services.GetRequiredService<SQLiteConnection>();
-communication.ReceivedData((data) => MinerEventProcessor.ProcessEvent(communication, connection, data));
+var chain = app.Services.GetRequiredService<BlockChain>();
+communication.ReceivedData(async (data) => await MinerEventProcessor.ProcessEvent(communication, chain, data));
 await app.RunAsync();

@@ -214,4 +214,11 @@ public class BaseBlock : MinerEventArgs
         readEndIndex = data[readIndex..].IndexOf((byte)0);
         this.Uncles = Encoding.UTF8.GetString(data.Slice(readIndex, readEndIndex));
     }
+
+
+    public static implicit operator Block(BaseBlock transaction)
+    {
+        // implemenr this oprator
+        throw new NotImplementedException();
+    }
 }
