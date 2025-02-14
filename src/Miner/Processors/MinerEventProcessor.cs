@@ -9,14 +9,14 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Channels;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Miner.Processors;
 internal static class MinerEventProcessor
 {
-    public static async ValueTask ProcessEvent(ICommunication communication, BlockChain chain, byte[] data)
+    public static async ValueTask ProcessEvent(ICommunication communication, BlockChain chain, byte[] data, ChannelWriter<string> writer)
     {
         if (data[0] == (byte)CommunicationDataType.BaseBlock)
         {
@@ -42,14 +42,13 @@ internal static class MinerEventProcessor
 
                 response[1] = Convert.ToByte(true);
                 communication.SendData(response);
-                await chain.AddBlock(block);
-
+                var task1 = chain.AddBlock(block);
+                var task2 = writer.WriteAsync(calculatedHash).AsTask();
+                await Task.WhenAll(task1, task2);
             }
         }
 
-        // for internal communication use the channel or weakreference
-        // block generated or confirmed
-        // process it
+        
         Console.WriteLine("Processing Miner Event");
     }
 

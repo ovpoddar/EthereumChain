@@ -33,6 +33,7 @@ public class Block
         ParentHash = parentHash;
         Nonce = 0;
         Uncles = [];
+        Hash = CalculateHash();
     }
 
     public Block(byte[] block)
