@@ -58,9 +58,9 @@ public class BlockChain
             foreach (var blockTransaction in block.Transactions)
             {
                 var transactionCommand = new SQLiteCommand("""
-                    INSERT INTO [Transaction] ([Id], [Nonce], [GasPrice], [GasLimit], [To], [Value],
+                    INSERT INTO [Transaction] ([Id], [Nonce], [GasPrice], [GasLimit], [To], [From], [Value],
                         [Data], [V], [R], [S], [RawTransaction], [BlockNumber])
-                    VALUES (@Id, @Nonce, @GasPrice, @GasLimit, @To, @Value,
+                    VALUES (@Id, @Nonce, @GasPrice, @GasLimit, @To, @From, @Value,
                         @Data, @V, @R, @S, @RawTransaction, @BlockNumber);
                 """, _connection, transaction);
                 transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.Id);
@@ -68,6 +68,7 @@ public class BlockChain
                 transactionCommand.Parameters.AddWithValue("@GasPrice", blockTransaction.GasPrice);
                 transactionCommand.Parameters.AddWithValue("@GasLimit", blockTransaction.GasLimit);
                 transactionCommand.Parameters.AddWithValue("@To", blockTransaction.To);
+                transactionCommand.Parameters.AddWithValue("@From", blockTransaction.From);
                 transactionCommand.Parameters.AddWithValue("@Value", blockTransaction.Value);
                 transactionCommand.Parameters.AddWithValue("@Data", blockTransaction.Data);
                 transactionCommand.Parameters.AddWithValue("@V", blockTransaction.V);

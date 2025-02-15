@@ -32,8 +32,6 @@ internal static class RequestHandler
     }
 
 
-    // earliest -       For the earliest/genesis block,
-    // latest -         for the latest mined block,
     // pending -        for the pending state/transactions,
     // safe -           for the most recent secure block,
     // finalized -      for the most recent secure block accepted by more than 2/3 of validators
@@ -42,15 +40,16 @@ internal static class RequestHandler
         try
         {
             sqLiteConnection.Open();
-            var query = tag switch
+            using var fetchCommand = new SQLiteCommand(tag switch
             {
-                "earliest" => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = 0",
-                "finalized" or "safe" or "pending" or "latest" => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = (SELECT MAX(BlockNumber) FROM [Transaction])",
-                _ => ""
-            };
-            using var fetchCommand = new SQLiteCommand(query, sqLiteConnection);
-            fetchCommand.ExecuteNonQuery();
-            return [];
+                "earliest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = 0 AND [From] = @sender",
+                _ => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = (SELECT MAX(BlockNumber) FROM [Transaction]) AND [From] = @sender",
+            }, sqLiteConnection);
+
+            fetchCommand.Parameters.AddWithValue("@blockNumber", accountAddress);
+            using var reader = fetchCommand.ExecuteReader();
+            var result = reader.GetInt32(0);
+            return Encoding.UTF8.GetBytes(result.ToString());
         }
         finally
         {

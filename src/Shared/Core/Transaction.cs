@@ -1,4 +1,5 @@
 ﻿using Nethereum.Model;
+using Nethereum.Signer;
 using Shared.Helpers;
 using System.Text;
 
@@ -15,6 +16,7 @@ public class Transaction
     public string GasPrice { get => _gasPrice.ToString("x"); }
     public string GasLimit { get => _gasLimit.ToString("X"); }
     public string To { get; }
+    public string From { get; }
     public string Value { get => _value.ToString("x"); }
     public string Data { get; }
     public string V { get; }
@@ -35,6 +37,7 @@ public class Transaction
         _gasPrice = Utilities.GetLongFromHexArray(transactionDetails.GasPrice);
         _gasLimit = Utilities.GetLongFromHexArray(transactionDetails.GasLimit);
         To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
+        From = transactionDetails.GetSenderAddress();
         _value = Utilities.GetLongFromHexArray(transactionDetails.Value);
         Data = Encoding.UTF8.GetString(transactionDetails.Data ?? []);
         V = Encoding.UTF8.GetString(transactionDetails.Signature.V);
