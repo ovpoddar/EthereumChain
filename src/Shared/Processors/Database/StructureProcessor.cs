@@ -47,7 +47,16 @@ public static class StructureProcessor
         
             CREATE TABLE IF NOT EXISTS [Transaction](
                 [Id] TEXT,
-                [RawTransaction] Text,
+                [Nonce] TEXT,
+                [GasPrice] TEXT,
+                [GasLimit] TEXT, 
+                [To] TEXT, 
+                [Value] TEXT,
+                [Data] TEXT,
+                [V] TEXT,
+                [R] TEXT,
+                [S] TEXT,
+                [RawTransaction] TEXT,
                 [BlockNumber] INTEGER
             );
         """, connection);

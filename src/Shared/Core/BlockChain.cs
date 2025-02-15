@@ -58,12 +58,23 @@ public class BlockChain
             foreach (var blockTransaction in block.Transactions)
             {
                 var transactionCommand = new SQLiteCommand("""
-                    INSERT INTO [Transaction] ([Id], [RawTransaction], [BlockNumber])
-                    VALUES (@Id, @RawTransaction, @ChainDBId);
+                    INSERT INTO [Transaction] ([Id], [Nonce], [GasPrice], [GasLimit], [To], [Value],
+                        [Data], [V], [R], [S], [RawTransaction], [BlockNumber])
+                    VALUES (@Id, @Nonce, @GasPrice, @GasLimit, @To, @Value,
+                        @Data, @V, @R, @S, @RawTransaction, @BlockNumber);
                 """, _connection, transaction);
                 transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.Id);
+                transactionCommand.Parameters.AddWithValue("@Nonce", blockTransaction.Nonce);
+                transactionCommand.Parameters.AddWithValue("@GasPrice", blockTransaction.GasPrice);
+                transactionCommand.Parameters.AddWithValue("@GasLimit", blockTransaction.GasLimit);
+                transactionCommand.Parameters.AddWithValue("@To", blockTransaction.To);
+                transactionCommand.Parameters.AddWithValue("@Value", blockTransaction.Value);
+                transactionCommand.Parameters.AddWithValue("@Data", blockTransaction.Data);
+                transactionCommand.Parameters.AddWithValue("@V", blockTransaction.V);
+                transactionCommand.Parameters.AddWithValue("@R", blockTransaction.R);
+                transactionCommand.Parameters.AddWithValue("@S", blockTransaction.S);
                 transactionCommand.Parameters.AddWithValue("@RawTransaction", blockTransaction.RawTransaction);
-                transactionCommand.Parameters.AddWithValue("@ChainDBId", block.Number);
+                transactionCommand.Parameters.AddWithValue("@BlockNumber", block.Number);
 
                 await transactionCommand.ExecuteNonQueryAsync();
             }
