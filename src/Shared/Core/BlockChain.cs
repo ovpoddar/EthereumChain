@@ -30,11 +30,29 @@ public class BlockChain
             using var chainCommand = new SQLiteCommand("""
                 INSERT INTO [ChainDB] ([Number], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom],
                     [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty],
-                    [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [TransactionsId], [Uncles])
+                    [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles])
                 VALUES (@Number, @Hash, @ParentHash, @Nonce, @Sha3Uncles, @LogsBloom,
                     @TransactionsRoot, @StateRoot, @ReceiptsRoot, @Miner, @Difficulty, @TotalDifficulty,
-                    @ExtraData, @Size, @GasLimit, @GasUsed, @TimeStamp, @TransactionsId, @Uncles);
+                    @ExtraData, @Size, @GasLimit, @GasUsed, @TimeStamp, @Uncles);
             """, _connection, transaction);
+            chainCommand.Parameters.AddWithValue("@Number", block.Number);
+            chainCommand.Parameters.AddWithValue("@Hash", block.Hash);
+            chainCommand.Parameters.AddWithValue("@ParentHash", block.ParentHash);
+            chainCommand.Parameters.AddWithValue("@Nonce", block.Nonce);
+            chainCommand.Parameters.AddWithValue("@Sha3Uncles", block.Sha3Uncles);
+            chainCommand.Parameters.AddWithValue("@LogsBloom", block.LogsBloom);
+            chainCommand.Parameters.AddWithValue("@TransactionsRoot", block.TransactionsRoot);
+            chainCommand.Parameters.AddWithValue("@StateRoot", block.StateRoot);
+            chainCommand.Parameters.AddWithValue("@ReceiptsRoot", block.ReceiptsRoot);
+            chainCommand.Parameters.AddWithValue("@Miner", block.Miner);
+            chainCommand.Parameters.AddWithValue("@Difficulty", block.Difficulty);
+            chainCommand.Parameters.AddWithValue("@TotalDifficulty", block.TotalDifficulty);
+            chainCommand.Parameters.AddWithValue("@ExtraData", block.ExtraData);
+            chainCommand.Parameters.AddWithValue("@Size", block.Size);
+            chainCommand.Parameters.AddWithValue("@GasLimit", block.GasLimit);
+            chainCommand.Parameters.AddWithValue("@GasUsed", block.GasUsed);
+            chainCommand.Parameters.AddWithValue("@TimeStamp", block.TimeStamp);
+            chainCommand.Parameters.AddWithValue("@Uncles", block.Uncles);
             await chainCommand.ExecuteNonQueryAsync();
 
             foreach (var blockTransaction in block.Transactions)

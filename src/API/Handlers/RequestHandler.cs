@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -28,6 +29,33 @@ internal static class RequestHandler
     public static ReadOnlySpan<byte> ProcessEthEstimateGas(ref EstimateGas estimateGas)
     {
         return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
+    }
+
+
+    // earliest -       For the earliest/genesis block,
+    // latest -         for the latest mined block,
+    // pending -        for the pending state/transactions,
+    // safe -           for the most recent secure block,
+    // finalized -      for the most recent secure block accepted by more than 2/3 of validators
+    public static ReadOnlySpan<byte> ProcessEthGetTransactionCount(string accountAddress, string tag, SQLiteConnection sqLiteConnection)
+    {
+        try
+        {
+            sqLiteConnection.Open();
+            var query = tag switch
+            {
+                "earliest" => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = 0",
+                "finalized" or "safe" or "pending" or "latest" => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = (SELECT MAX(BlockNumber) FROM [Transaction])",
+                _ => ""
+            };
+            using var fetchCommand = new SQLiteCommand(query, sqLiteConnection);
+            fetchCommand.ExecuteNonQuery();
+            return [];
+        }
+        finally
+        {
+            sqLiteConnection.Close();
+        }
     }
 
     public static ReadOnlySpan<byte> ProcessEthSendTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
@@ -50,7 +78,7 @@ internal static class RequestHandler
             using var processCommand = new SQLiteCommand("""
                 insert into MemPool (Id, RawTransaction)
                 values (@Id, @RawTransaction);
-                """, sqLiteConnection);
+            """, sqLiteConnection);
             processCommand.Parameters.AddWithValue("@Id", transaction.TransactionId);
             processCommand.Parameters.AddWithValue("@RawTransaction", transaction.RawTransaction);
             var response = processCommand.ExecuteNonQuery();

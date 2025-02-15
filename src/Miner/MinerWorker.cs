@@ -13,19 +13,26 @@ internal class MinerWorker : BackgroundService
     private readonly ChannelReader<string> _reader;
     // make a thread safe write this veritable to track the 
     // latest variable and on change cancel the current task
-    private readonly string _latestHash;
+    private string _latestHash;
 
     public MinerWorker(ILogger<MinerWorker> logger, ICommunication _communication, ChannelReader<string> reader)
     {
         this._logger = logger;
         this._communication = _communication;
         this._reader = reader;
+        Task.Run(async () =>
+        {
+            _latestHash = await _reader.ReadAsync();
+        });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            // implement the core for processing the block chain
+            // the work to calculate the hash and add the block to the chain 
+            // and publish it to network
             _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
             await Task.Delay(1000, stoppingToken);
         }
