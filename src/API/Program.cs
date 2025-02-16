@@ -17,8 +17,6 @@ using (var httpListener = new HttpListener())
 using (var communication = new DataReceivedMemoryProcessor("EthereumChain", true))
 await using (var webSocketListener = new MinerSocketProcessor(sqlConnection, communication))
 {
-
-
     var eventProcesser = new ResponseProcessor(webSocketListener);
     eventProcesser.HookEventHandlers();
     httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");

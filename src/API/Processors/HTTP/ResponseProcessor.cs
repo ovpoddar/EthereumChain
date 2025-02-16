@@ -54,6 +54,12 @@ internal static class ResponseProcessor
                 var transactionDetails = requestContext[transactionDetailsRange[0]];
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
+            case "eth_getblockbynumber":
+                var tag = RequestSerializer.GetValueFromArray<Range>(ref requestContext, "params", 0);
+                var fullData = RequestSerializer.GetValueFromArray<bool>(ref requestContext, "params", 1);
+                var tagDetails = requestContext[tag];
+                RequestHandler.ProcessEthGetBlockByNumber(ref tagDetails, fullData, sqLiteConnection);
+                break;
             case "bb_getaddress":
             case "bb_getbalancehistory":
             case "bb_getblockhash":
@@ -88,7 +94,6 @@ internal static class ResponseProcessor
             case "eth_getaccount":
             case "eth_getbalance":
             case "eth_getblockbyhash":
-            case "eth_getblockbynumber":
             case "eth_getblockreceipts":
             case "eth_getblocktransactioncountbyhash":
             case "eth_getblocktransactioncountbynumber":

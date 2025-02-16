@@ -20,13 +20,13 @@ using API.Helpers;
 namespace API.Handlers;
 internal static class RequestHandler
 {
-    public static ReadOnlySpan<byte> ProcessEthGetCode(string accountAddress, string targetBlock)
+    internal static ReadOnlySpan<byte> ProcessEthGetCode(string accountAddress, string targetBlock)
     {
         // process how ever see fit
         return "\"0x\""u8;
     }
 
-    public static ReadOnlySpan<byte> ProcessEthEstimateGas(ref EstimateGas estimateGas)
+    internal static ReadOnlySpan<byte> ProcessEthEstimateGas(ref EstimateGas estimateGas)
     {
         return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
     }
@@ -35,7 +35,7 @@ internal static class RequestHandler
     // pending -        for the pending state/transactions,
     // safe -           for the most recent secure block,
     // finalized -      for the most recent secure block accepted by more than 2/3 of validators
-    public static ReadOnlySpan<byte> ProcessEthGetTransactionCount(string accountAddress, string tag, SQLiteConnection sqLiteConnection)
+    internal static ReadOnlySpan<byte> ProcessEthGetTransactionCount(string accountAddress, string tag, SQLiteConnection sqLiteConnection)
     {
         try
         {
@@ -48,8 +48,9 @@ internal static class RequestHandler
 
             fetchCommand.Parameters.AddWithValue("@blockNumber", accountAddress);
             using var reader = fetchCommand.ExecuteReader();
+            reader.Read();
             var result = reader.GetInt32(0);
-            return Encoding.UTF8.GetBytes(result.ToString());
+            return Encoding.UTF8.GetBytes($"\"0x{result:x}\"");
         }
         finally
         {
@@ -57,13 +58,13 @@ internal static class RequestHandler
         }
     }
 
-    public static ReadOnlySpan<byte> ProcessEthSendTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    internal static ReadOnlySpan<byte> ProcessEthSendTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
     {
         var transaction = new BaseTransaction(Guid.NewGuid(), Encoding.UTF8.GetString(requestContext[1..^1]));
         return ProcessEthSendRawTransaction(sqLiteConnection, transaction);
     }
 
-    public static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
+    internal static ReadOnlySpan<byte> ProcessEthSendRawTransaction(ref Span<byte> requestContext, SQLiteConnection sqLiteConnection)
     {
         var transaction = new BaseTransaction(requestContext);
         return ProcessEthSendRawTransaction(sqLiteConnection, transaction);
@@ -100,5 +101,18 @@ internal static class RequestHandler
         sendingDataWithContext[0] = (byte)CommunicationDataType.BaseBlock;
         data.CopyTo(sendingDataWithContext);
         communication.SendData(sendingDataWithContext);
+    }
+
+    internal static void ProcessEthGetBlockByNumber(ref Span<byte> tag, bool fullData, SQLiteConnection sqLiteConnection)
+    {
+        var sql = "SELECT * FROM [ChainDB] WHERE [Number] = @NUMBER";
+        if (fullData)
+        {
+            var SQL1 = "SELECT [RawTransaction] FROM [Transaction] WHERE [BlockNumber] = @NUMBER";
+        }
+        else
+        {
+            var SQL1 = "SELECT * FROM [Transaction] WHERE [BlockNumber] = @NUMBER";
+        }
     }
 }

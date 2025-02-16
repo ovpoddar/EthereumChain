@@ -33,6 +33,7 @@ internal class MinerWorker : BackgroundService
             // implement the core for processing the block chain
             // the work to calculate the hash and add the block to the chain 
             // and publish it to network
+            // also add deduct the transaction to accounts
             _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
             await Task.Delay(1000, stoppingToken);
         }

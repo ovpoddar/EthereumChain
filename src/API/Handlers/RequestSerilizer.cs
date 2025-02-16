@@ -89,6 +89,39 @@ internal class RequestSerializer
             propertyReader.TrySkip();
             return Unsafe.As<EstimateGas, T>(ref result);
         }
-        throw new NotImplementedException();
+        else if (typeof(T) == typeof(bool))
+        {
+            var result = propertyReader.GetBoolean();
+            return Unsafe.As<bool, T>(ref result);
+        }
+            throw new NotImplementedException();
+    }
+
+    // this is a creepy method but so does the json
+    public static T GetValueFromArray<T>(ref Span<byte> readBytes, string propertyName, int index)
+    {
+        var reader = new Utf8JsonReader(readBytes);
+        var foundDepth = 0;
+        while (reader.TokenType != JsonTokenType.EndObject || reader.CurrentDepth != 0)
+        {
+            if (reader.TokenType == JsonTokenType.PropertyName && reader.ValueTextEquals(propertyName))
+            {
+                reader.Read();
+                if (reader.TokenType != JsonTokenType.StartArray)
+                    continue;
+                foundDepth = reader.CurrentDepth;
+
+                reader.Read();
+                var writeIndex = 0;
+                while (reader.TokenType != JsonTokenType.EndArray || reader.CurrentDepth != foundDepth)
+                {
+                    if (index != writeIndex) { reader.Read(); writeIndex++; continue; }
+                    return DecodedValue<T>(ref reader);
+                }
+
+            }
+            reader.Read();
+        }
+        return default(T);
     }
 }
