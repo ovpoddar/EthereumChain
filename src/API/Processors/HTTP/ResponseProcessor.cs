@@ -9,11 +9,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace API.Processors.HTTP;
 internal static class ResponseProcessor
 {
+    private static JsonWriterOptions _writerOptions => new JsonWriterOptions()
+    {
+        Indented = true
+    };
+
     internal static void ProcessRequest(ref Span<byte> requestContext, Stream response, SQLiteConnection sqLiteConnection)
     {
         response.Write("\"result\":"u8);
@@ -55,11 +61,13 @@ internal static class ResponseProcessor
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
             case "eth_getblockbynumber":
-                var tag = RequestSerializer.GetValueFromArray<Range>(ref requestContext, "params", 0);
+            {
+                var tag = RequestSerializer.GetValueFromArray<string>(ref requestContext, "params", 0);
                 var fullData = RequestSerializer.GetValueFromArray<bool>(ref requestContext, "params", 1);
-                var tagDetails = requestContext[tag];
-                RequestHandler.ProcessEthGetBlockByNumber(ref tagDetails, fullData, sqLiteConnection);
+                using var writer = new Utf8JsonWriter(response, _writerOptions);
+                RequestHandler.ProcessEthGetBlockByNumber(tag, fullData, sqLiteConnection, writer);
                 break;
+            }
             case "bb_getaddress":
             case "bb_getbalancehistory":
             case "bb_getblockhash":

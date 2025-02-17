@@ -5,6 +5,7 @@ namespace Shared.Core;
 
 public class Block
 {
+    // todo: need to store hex string
     public int Number { get; set; }
     public string Hash { get; set; }
     public string ParentHash { get; set; }

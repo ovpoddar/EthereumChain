@@ -24,6 +24,8 @@ public class Transaction
     public string S { get; }
     public string RawTransaction { get; }
 
+    // todo: intiduice transactionIndex
+
     public Transaction(Guid id, Span<byte> transaction)
     {
         _id = id;
