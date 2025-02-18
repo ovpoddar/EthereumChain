@@ -28,14 +28,15 @@ public class BlockChain
         try
         {
             using var chainCommand = new SQLiteCommand("""
-                INSERT INTO [ChainDB] ([Number], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom],
+                INSERT INTO [ChainDB] ([Number], [NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom],
                     [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty],
                     [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles])
-                VALUES (@Number, @Hash, @ParentHash, @Nonce, @Sha3Uncles, @LogsBloom,
+                VALUES (@Number, @NumberToHex, @Hash, @ParentHash, @Nonce, @Sha3Uncles, @LogsBloom,
                     @TransactionsRoot, @StateRoot, @ReceiptsRoot, @Miner, @Difficulty, @TotalDifficulty,
                     @ExtraData, @Size, @GasLimit, @GasUsed, @TimeStamp, @Uncles);
             """, _connection, transaction);
             chainCommand.Parameters.AddWithValue("@Number", block.Number);
+            chainCommand.Parameters.AddWithValue("@NumberToHex", block.NumberToHex);
             chainCommand.Parameters.AddWithValue("@Hash", block.Hash);
             chainCommand.Parameters.AddWithValue("@ParentHash", block.ParentHash);
             chainCommand.Parameters.AddWithValue("@Nonce", block.Nonce);
@@ -59,9 +60,9 @@ public class BlockChain
             {
                 var transactionCommand = new SQLiteCommand("""
                     INSERT INTO [Transaction] ([Id], [Nonce], [GasPrice], [GasLimit], [To], [From], [Value],
-                        [Data], [V], [R], [S], [RawTransaction], [BlockNumber])
+                        [Data], [V], [R], [S], [RawTransaction], [TransactionIndex], [BlockNumber])
                     VALUES (@Id, @Nonce, @GasPrice, @GasLimit, @To, @From, @Value,
-                        @Data, @V, @R, @S, @RawTransaction, @BlockNumber);
+                        @Data, @V, @R, @S, @RawTransaction, @TransactionIndex, @BlockNumber);
                 """, _connection, transaction);
                 transactionCommand.Parameters.AddWithValue("@Id", blockTransaction.Id);
                 transactionCommand.Parameters.AddWithValue("@Nonce", blockTransaction.Nonce);
@@ -75,6 +76,7 @@ public class BlockChain
                 transactionCommand.Parameters.AddWithValue("@R", blockTransaction.R);
                 transactionCommand.Parameters.AddWithValue("@S", blockTransaction.S);
                 transactionCommand.Parameters.AddWithValue("@RawTransaction", blockTransaction.RawTransaction);
+                transactionCommand.Parameters.AddWithValue("@TransactionIndex", blockTransaction.TransactionIndex);
                 transactionCommand.Parameters.AddWithValue("@BlockNumber", block.Number);
 
                 await transactionCommand.ExecuteNonQueryAsync();

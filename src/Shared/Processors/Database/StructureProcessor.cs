@@ -25,6 +25,7 @@ public static class StructureProcessor
 
             CREATE TABLE IF NOT EXISTS [ChainDB] (
                 [Number] INTEGER,
+                [NumberToHex] TEXT,
                 [Hash] TEXT,
                 [ParentHash] TEXT,
                 [Nonce] INTEGER,
@@ -58,6 +59,7 @@ public static class StructureProcessor
                 [R] TEXT,
                 [S] TEXT,
                 [RawTransaction] TEXT,
+                [TransactionIndex] TEXT,
                 [BlockNumber] INTEGER
             );
         """, connection);

@@ -10,6 +10,7 @@ public class Transaction
     private readonly ulong _gasLimit;
     private readonly ulong _value;
     private readonly Guid _id;
+    private int _transactionIndex;
 
     public string Id { get => _id.ToString("X"); }
     public string Nonce { get; }
@@ -23,8 +24,7 @@ public class Transaction
     public string R { get; }
     public string S { get; }
     public string RawTransaction { get; }
-
-    // todo: intiduice transactionIndex
+    public string TransactionIndex { get => _transactionIndex.ToString("X"); }
 
     public Transaction(Guid id, Span<byte> transaction)
     {
@@ -59,4 +59,6 @@ public class Transaction
         }
         catch { return false; }
     }
+
+    internal void SetTransactionIndex(int index) => _transactionIndex = index;
 }

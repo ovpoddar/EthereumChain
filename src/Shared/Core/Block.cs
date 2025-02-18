@@ -5,8 +5,8 @@ namespace Shared.Core;
 
 public class Block
 {
-    // todo: need to store hex string
     public int Number { get; set; }
+    public string NumberToHex { get => $"0x{Number:x}"; }
     public string Hash { get; set; }
     public string ParentHash { get; set; }
     public long Nonce { get; set; }
@@ -44,7 +44,7 @@ public class Block
 
     public string CalculateHash()
     {
-        var rawData = $"{Number} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
+        var rawData = $"{NumberToHex} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a.number).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
         return BitConverter.ToString(bytes).Replace("-", "");
     }
