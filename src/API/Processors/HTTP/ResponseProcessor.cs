@@ -24,9 +24,10 @@ internal static class ResponseProcessor
     {
         response.Write("\"result\":"u8);
         var method = RequestSerializer.GetValueAs<string>(ref requestContext, "method");
-        switch (method)
+        if (method == null) return;
+        switch (method.ToLower())
         {
-            case "eth_currencySymbol":
+            case "eth_currencysymbol":
                 response.Write("\"ETH\""u8);
                 break;
 
@@ -34,28 +35,28 @@ internal static class ResponseProcessor
                 response.Write(Setting.NetWorkIdFormattedByte);
                 break;
 
-            case "eth_chainId":
+            case "eth_chainid":
                 response.Write(Setting.ChainIdFormattedByte);
                 break;
 
-            case "eth_getCode":
+            case "eth_getcode":
                 var codeDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
                 response.Write(RequestHandler.ProcessEthGetCode(codeDetails[0], codeDetails[1]));
                 break;
 
-            case "eth_gasPrice":
+            case "eth_gasprice":
                 response.Write(Setting.GasPriceFormattedByte);
                 break;
 
-            case "eth_estimateGas":
+            case "eth_estimategas":
                 var estimateGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
                 break;
-            case "eth_getTransactionCount":
+            case "eth_gettransactioncount":
                 var transectionDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
                 response.Write(RequestHandler.ProcessEthGetTransactionCount(transectionDetails[0], transectionDetails[1], sqLiteConnection));
                 break;
-            case "eth_sendRawTransaction":
+            case "eth_sendrawtransaction":
                 var transactionDetailsRange = RequestSerializer.GetArrayAs<Range>(ref requestContext, "params", 1);
                 var transactionDetails = requestContext[transactionDetailsRange[0]];
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
@@ -161,7 +162,7 @@ internal static class ResponseProcessor
             case "parity_getblockreceipts":
             case "parity_pendingtransactions":
             case "qn_broadcastrawtransaction":
-            case "View on Marketplace":
+            case "view on Marketplace":
             case "qn_fetchaddressesbytag":
             case "qn_fetchnftcollectiondetails":
             case "qn_fetchnfts":
