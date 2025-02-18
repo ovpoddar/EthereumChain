@@ -62,13 +62,12 @@ internal static class ResponseProcessor
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
             case "eth_getblockbynumber":
-            {
                 var tag = RequestSerializer.GetValueFromArray<string>(ref requestContext, "params", 0);
                 var fullData = RequestSerializer.GetValueFromArray<bool>(ref requestContext, "params", 1);
-                using var writer = new Utf8JsonWriter(response, _writerOptions);
+                var writer = new Utf8JsonWriter(response, _writerOptions);
                 RequestHandler.ProcessEthGetBlockByNumber(tag, fullData, sqLiteConnection, writer);
+                writer.Dispose();
                 break;
-            }
             case "bb_getaddress":
             case "bb_getbalancehistory":
             case "bb_getblockhash":
