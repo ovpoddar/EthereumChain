@@ -34,22 +34,15 @@ internal class ResponseProcessor
         Console.WriteLine("Something happend.");
     }
 
-    // todo: Refactor this later
     private async void MinerEvents_Block_Generated(object? sender, BaseBlock e)
     {
         var allocatedBytes = e.GetWrittenByteSize();
-        if (allocatedBytes >= 1024)
-        {
-            Span<byte> context = stackalloc byte[allocatedBytes];
-            var requestEvent = e.GetRequestEvent(context);
-            await _webSocketListener.NotifyAll(requestEvent);
-        }
-        else
-        {
-            using var context = new ArrayPoolUsing<byte>(allocatedBytes);
-            var requestEvent = e.GetRequestEvent(context);
-            await _webSocketListener.NotifyAll(requestEvent);
-        }
+        using var pool = new ArrayPoolUsing<byte>();
+        Span<byte> context = allocatedBytes <= 1024
+            ? stackalloc byte[allocatedBytes]
+            : pool.Rent(allocatedBytes);
+        var requestEvent = e.GetRequestEvent(context);
+        await _webSocketListener.NotifyAll(requestEvent);
     }
 
     private void MinerEvents_Transaction_Updated(object? sender, EventArgs e)

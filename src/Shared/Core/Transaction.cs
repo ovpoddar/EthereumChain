@@ -10,7 +10,7 @@ public class Transaction
     private readonly ulong _gasLimit;
     private readonly ulong _value;
     private readonly Guid _id;
-    private int _transactionIndex;
+    internal int _transactionIndex;
 
     public string Id { get => _id.ToString("X"); }
     public string Nonce { get; }

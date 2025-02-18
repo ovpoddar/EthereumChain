@@ -108,8 +108,7 @@ internal static class RequestHandler
         try
         {
             sqLiteConnection.Open();
-            // todo: need to work on query for tag
-            using var command = new SQLiteCommand("SELECT [ChainDB] ([NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles] FROM [ChainDB] WHERE [NumberToHex] = @Number", sqLiteConnection);
+            using var command = BuildCommand(sqLiteConnection, tag);
             command.Parameters.AddWithValue("@Number", tag);
             using var reader = command.ExecuteReader();
 
@@ -174,5 +173,22 @@ internal static class RequestHandler
             writer.WriteEndObject();
             writer.Flush();
         }
+    }
+
+    private static SQLiteCommand BuildCommand(SQLiteConnection sqLiteConnection, string tag)
+    {
+        var command = sqLiteConnection.CreateCommand();
+        StringBuilder sb = new StringBuilder();
+        sb.Append("SELECT [ChainDB] ([NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles] FROM [ChainDB] WHERE [NumberToHex] = ");
+        sb.Append(tag.ToLower() switch
+        {
+            "earliest" => "0x0",
+            "latest" or "pending" => "(SELECT COUNT(*) FROM ChainDB)",
+            _ => "@Number"
+        });
+        command.CommandText = sb.ToString();
+        if (tag.StartsWith("0x"))
+            command.Parameters.AddWithValue("@Number", tag);
+        return command;
     }
 }

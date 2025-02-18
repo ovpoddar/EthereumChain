@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using Nethereum.ABI.Util;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Shared.Core;
@@ -44,7 +45,7 @@ public class Block
 
     public string CalculateHash()
     {
-        var rawData = $"{NumberToHex} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a.number).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
+        var rawData = $"{NumberToHex} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a._transactionIndex).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
         return BitConverter.ToString(bytes).Replace("-", "");
     }
