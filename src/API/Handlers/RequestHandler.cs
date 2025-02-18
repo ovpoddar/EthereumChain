@@ -103,13 +103,12 @@ internal static class RequestHandler
         communication.SendData(sendingDataWithContext);
     }
 
-    internal static void ProcessEthGetBlockByNumber(string tag, bool fullData, SQLiteConnection sqLiteConnection, Utf8JsonWriter writer)
+    internal static void ProcessEthGetBlockByNumber(string tag, bool fullData, bool isHash, SQLiteConnection sqLiteConnection, Utf8JsonWriter writer)
     {
         try
         {
             sqLiteConnection.Open();
-            using var command = BuildCommand(sqLiteConnection, tag);
-            command.Parameters.AddWithValue("@Number", tag);
+            using var command = BuildCommand(sqLiteConnection, tag, isHash);
             using var reader = command.ExecuteReader();
 
             if (reader.Read())
@@ -175,11 +174,12 @@ internal static class RequestHandler
         }
     }
 
-    private static SQLiteCommand BuildCommand(SQLiteConnection sqLiteConnection, string tag)
+    private static SQLiteCommand BuildCommand(SQLiteConnection sqLiteConnection, string tag, bool isHash)
     {
         var command = sqLiteConnection.CreateCommand();
         StringBuilder sb = new StringBuilder();
-        sb.Append("SELECT [ChainDB] ([NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles] FROM [ChainDB] WHERE [NumberToHex] = ");
+        sb.Append("SELECT [ChainDB] ([NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles] FROM [ChainDB] WHERE");
+        sb.Append(isHash ? "[Hash] = " : "[NumberToHex] = ");
         sb.Append(tag.ToLower() switch
         {
             "earliest" => "0x0",

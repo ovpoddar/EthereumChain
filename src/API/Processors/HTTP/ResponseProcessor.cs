@@ -62,10 +62,15 @@ internal static class ResponseProcessor
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
             case "eth_getblockbynumber":
-                var tag = RequestSerializer.GetValueFromArray<string>(ref requestContext, "params", 0);
+            case "eth_getblockbyhash":
+                var blockIdentifier = RequestSerializer.GetValueFromArray<string>(ref requestContext, "params", 0);
                 var fullData = RequestSerializer.GetValueFromArray<bool>(ref requestContext, "params", 1);
                 var writer = new Utf8JsonWriter(response, _writerOptions);
-                RequestHandler.ProcessEthGetBlockByNumber(tag, fullData, sqLiteConnection, writer);
+                RequestHandler.ProcessEthGetBlockByNumber(blockIdentifier,
+                    fullData,
+                    method.Equals("eth_getblockbyhash", StringComparison.CurrentCultureIgnoreCase), 
+                    sqLiteConnection, 
+                    writer);
                 writer.Dispose();
                 break;
             case "bb_getaddress":
@@ -101,7 +106,6 @@ internal static class ResponseProcessor
             case "eth_feehistory":
             case "eth_getaccount":
             case "eth_getbalance":
-            case "eth_getblockbyhash":
             case "eth_getblockreceipts":
             case "eth_getblocktransactioncountbyhash":
             case "eth_getblocktransactioncountbynumber":
@@ -197,7 +201,11 @@ internal static class ResponseProcessor
             case "web3_clientversion":
             case "web3_sha3":
             default:
+                Console.BackgroundColor = ConsoleColor.Red;
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine(method);
+                Console.ResetColor();
+                Console.WriteLine();
                 break;
         }
     }
