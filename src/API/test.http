@@ -38,7 +38,6 @@ Content-Type: application/json
 }
 ###
 
-
 POST {{Url}}
 Content-Type: application/json
 
@@ -62,7 +61,6 @@ Content-Type: application/json
 }
 ###
 
-	
 POST {{Url}}
 Content-Type: application/json
 
@@ -72,5 +70,48 @@ Content-Type: application/json
 	"id":9661311584379,
 	"jsonrpc":"2.0",
 	"method":"eth_sendRawTransaction"	
+}
+###
+
+POST {{Url}}
+Content-Type: application/json
+
+{
+    "jsonrpc": "2.0",
+    "method": "eth_getBlockByHash",
+    "params": [
+        "0xe76d777791f48b5995d20789183514f4aa8bbf09e357383e9a44fae025c6c50a",
+        true
+    ],
+    "id": 0
+}
+###
+
+POST {{Url}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "eth_getBlockByNumber",
+  "params": [
+    "0x01",
+    true
+  ]
+}
+###
+
+# broken
+POST {{Url}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "eth_getTransactionCount",
+  "params": [
+    "0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1",
+    "latest"
+  ]
 }
 ###

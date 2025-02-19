@@ -35,6 +35,7 @@ internal static class RequestHandler
     // pending -        for the pending state/transactions,
     // safe -           for the most recent secure block,
     // finalized -      for the most recent secure block accepted by more than 2/3 of validators
+    //todo: fix
     internal static ReadOnlySpan<byte> ProcessEthGetTransactionCount(string accountAddress, string tag, SQLiteConnection sqLiteConnection)
     {
         try
@@ -84,7 +85,7 @@ internal static class RequestHandler
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
             MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, transaction);
-            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes(transaction.TransactionId.ToString()));
+            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{ transaction.TransactionId }\""));
         }
         finally
         {
@@ -110,12 +111,12 @@ internal static class RequestHandler
             sqLiteConnection.Open();
             using var command = BuildCommand(sqLiteConnection, tag, isHash);
             using var reader = command.ExecuteReader();
+            writer.WriteStartObject();
 
             if (reader.Read())
             {
-                writer.WriteStartObject();
-                var number = reader.GetString(0);
-                writer.WriteString("number", number);
+                var numberHex = reader.GetString(0);
+                writer.WriteString("numberHex", numberHex);
                 writer.WriteString("difficulty", reader.GetString(10));
                 writer.WriteString("extraData", reader.GetString(12));
                 writer.WriteString("gasLimit", reader.GetString(14));
@@ -134,11 +135,12 @@ internal static class RequestHandler
                 writer.WriteString("totalDifficulty", reader.GetString(11));
                 writer.WriteString("transactionsRoot", reader.GetString(6));
                 writer.WriteString("uncles", reader.GetString(17));
-
+                var number = reader.GetInt32(18);
 
                 using var transactionData = new SQLiteCommand(fullData
                     ? "SELECT [Nonce], [GasPrice], [GasLimit], [To], [From], [Value], [Data], [V], [R], [S], [RawTransaction], [TransactionIndex], [BlockNumber] FROM [Transaction] WHERE [BlockNumber] = @NUMBER"
                     : "SELECT [RawTransaction] FROM [Transaction] WHERE [BlockNumber] = @NUMBER", sqLiteConnection);
+                transactionData.Parameters.AddWithValue("@NUMBER", number);
                 using var transactionReader = transactionData.ExecuteReader();
                 writer.WriteStartArray("transactions");
                 if (!fullData)
@@ -148,8 +150,9 @@ internal static class RequestHandler
                 {
                     while (transactionReader.Read())
                     {
+                        writer.WriteStartObject();
                         writer.WriteString("blockHash", blockHash);
-                        writer.WriteString("blockNumber", number);
+                        writer.WriteString("blockNumber", numberHex);
                         writer.WriteString("hash", transactionReader.GetString(10));
                         writer.WriteString("transactionIndex", transactionReader.GetString(11));
                         writer.WriteString("nonce", transactionReader.GetString(0));
@@ -161,6 +164,7 @@ internal static class RequestHandler
                         writer.WriteString("value", transactionReader.GetString(5));
                         writer.WriteString("gas", transactionReader.GetString(2));
                         writer.WriteString("gasPrice", transactionReader.GetString(1));
+                        writer.WriteEndObject();
                     }
                 }
                 writer.WriteEndArray();
@@ -178,12 +182,12 @@ internal static class RequestHandler
     {
         var command = sqLiteConnection.CreateCommand();
         StringBuilder sb = new StringBuilder();
-        sb.Append("SELECT [ChainDB] ([NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles] FROM [ChainDB] WHERE");
+        sb.Append("SELECT [NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles], [Number] FROM [ChainDB] WHERE ");
         sb.Append(isHash ? "[Hash] = " : "[NumberToHex] = ");
         sb.Append(tag.ToLower() switch
         {
             "earliest" => "0x0",
-            "latest" or "pending" => "(SELECT COUNT(*) FROM ChainDB)",
+            "latest" or "pending" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number])",
             _ => "@Number"
         });
         command.CommandText = sb.ToString();

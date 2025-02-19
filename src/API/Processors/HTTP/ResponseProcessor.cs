@@ -73,6 +73,7 @@ internal static class ResponseProcessor
                     writer);
                 writer.Dispose();
                 break;
+
             case "bb_getaddress":
             case "bb_getbalancehistory":
             case "bb_getblockhash":
