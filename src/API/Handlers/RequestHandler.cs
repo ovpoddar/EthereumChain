@@ -84,7 +84,7 @@ internal static class RequestHandler
             var response = processCommand.ExecuteNonQuery();
             Debug.Assert(response != 0);
             MinerEvents.RaisedMinerEvent(MinerEventsTypes.TransactionAdded, transaction);
-            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{ transaction.TransactionId }\""));
+            return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{transaction.TransactionId}\""));
         }
         finally
         {
@@ -193,5 +193,23 @@ internal static class RequestHandler
         if (tag.StartsWith("0x"))
             command.Parameters.AddWithValue("@Number", tag);
         return command;
+    }
+
+    internal static ReadOnlySpan<byte> ProcessEthBlockNumber(SQLiteConnection sqLiteConnection)
+    {
+        try
+        {
+            sqLiteConnection.Open();
+            using var command = sqLiteConnection.CreateCommand();
+            command.CommandText = "SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC";
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{reader.GetString(0)}\""));
+            return [];
+        }
+        finally
+        {
+            sqLiteConnection.Close();
+        }
     }
 }

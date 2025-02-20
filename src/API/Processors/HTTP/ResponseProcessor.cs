@@ -52,15 +52,18 @@ internal static class ResponseProcessor
                 var estimateGas = RequestSerializer.GetArrayAs<EstimateGas>(ref requestContext, "params", 1);
                 response.Write(RequestHandler.ProcessEthEstimateGas(ref estimateGas[0]));
                 break;
+
             case "eth_gettransactioncount":
                 var transectionDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
                 response.Write(RequestHandler.ProcessEthGetTransactionCount(transectionDetails[0], transectionDetails[1], sqLiteConnection));
                 break;
+
             case "eth_sendrawtransaction":
                 var transactionDetailsRange = RequestSerializer.GetArrayAs<Range>(ref requestContext, "params", 1);
                 var transactionDetails = requestContext[transactionDetailsRange[0]];
                 response.Write(RequestHandler.ProcessEthSendTransaction(ref transactionDetails, sqLiteConnection));
                 break;
+
             case "eth_getblockbynumber":
             case "eth_getblockbyhash":
                 var blockIdentifier = RequestSerializer.GetValueFromArray<string>(ref requestContext, "params", 0);
@@ -74,8 +77,13 @@ internal static class ResponseProcessor
                 writer.Dispose();
                 break;
 
+            case "eth_blocknumber":
+                response.Write(RequestHandler.ProcessEthBlockNumber(sqLiteConnection));
+                break;
+
             case "bb_getaddress":
             case "bb_getbalancehistory":
+            case "eth_sendtransaction":
             case "bb_getblockhash":
             case "bb_gettickerslist":
             case "bb_gettx":
@@ -98,7 +106,6 @@ internal static class ResponseProcessor
             case "debug_tracetransaction":
             case "eth_accounts":
             case "eth_blobbasefee":
-            case "eth_blocknumber":
             case "eth_call":
             case "eth_callmany":
             case "eth_cancelprivatetransaction":
@@ -136,7 +143,6 @@ internal static class ResponseProcessor
             case "eth_pendingtransactions":
             case "eth_protocolversion":
             case "eth_sendprivatetransaction":
-            case "eth_sendtransaction":
             case "eth_sign":
             case "eth_signtransaction":
             case "eth_submithashrate":
