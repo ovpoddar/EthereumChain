@@ -31,11 +31,9 @@ internal static class RequestHandler
         return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"0x{21000:x}\""));
     }
 
-
     // pending -        for the pending state/transactions,
     // safe -           for the most recent secure block,
     // finalized -      for the most recent secure block accepted by more than 2/3 of validators
-    //todo: fix
     internal static ReadOnlySpan<byte> ProcessEthGetTransactionCount(string accountAddress, string tag, SQLiteConnection sqLiteConnection)
     {
         try
@@ -43,11 +41,12 @@ internal static class RequestHandler
             sqLiteConnection.Open();
             using var fetchCommand = new SQLiteCommand(tag switch
             {
-                "earliest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = 0 AND [From] = @sender",
+                "earliest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] ASC) AND [From] = @sender",
+                "latest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC) AND [From] = @sender",
                 _ => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = (SELECT MAX(BlockNumber) FROM [Transaction]) AND [From] = @sender",
             }, sqLiteConnection);
 
-            fetchCommand.Parameters.AddWithValue("@blockNumber", accountAddress);
+            fetchCommand.Parameters.AddWithValue("@sender", accountAddress);
             using var reader = fetchCommand.ExecuteReader();
             reader.Read();
             var result = reader.GetInt32(0);
@@ -186,8 +185,8 @@ internal static class RequestHandler
         sb.Append(isHash ? "[Hash] = " : "[NumberToHex] = ");
         sb.Append(tag.ToLower() switch
         {
-            "earliest" => "0x0",
-            "latest" or "pending" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number])",
+            "earliest" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] ASC)",
+            "latest" or "pending" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC)",
             _ => "@Number"
         });
         command.CommandText = sb.ToString();
