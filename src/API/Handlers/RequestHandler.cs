@@ -116,23 +116,23 @@ internal static class RequestHandler
             {
                 var numberHex = reader.GetString(0);
                 writer.WriteString("numberHex", numberHex);
-                writer.WriteString("difficulty", reader.GetString(10));
-                writer.WriteString("extraData", reader.GetString(12));
-                writer.WriteString("gasLimit", reader.GetString(14));
-                writer.WriteString("gasUsed", reader.GetString(15));
                 var blockHash = reader.GetString(1);
                 writer.WriteString("hash", blockHash);
-                writer.WriteString("logsBloom", reader.GetString(5));
-                writer.WriteString("miner", reader.GetString(9));
-                writer.WriteString("nonce", reader.GetString(3));
                 writer.WriteString("parentHash", reader.GetString(2));
-                writer.WriteString("receiptsRoot", reader.GetString(8));
-                writer.WriteString("sha3Uncles", reader.GetString(5));
-                writer.WriteString("size", reader.GetString(13));
-                writer.WriteString("stateRoot", reader.GetString(7));
-                writer.WriteString("timestamp", reader.GetString(16));
-                writer.WriteString("totalDifficulty", reader.GetString(11));
+                writer.WriteNumber("nonce", reader.GetInt32(3));
+                writer.WriteString("sha3Uncles", reader.GetString(4));
+                writer.WriteString("logsBloom", reader.GetString(5));
                 writer.WriteString("transactionsRoot", reader.GetString(6));
+                writer.WriteString("stateRoot", reader.GetString(7));
+                writer.WriteString("receiptsRoot", reader.GetString(8));
+                writer.WriteString("miner", reader.GetString(9));
+                writer.WriteString("difficulty", reader.GetString(10));
+                writer.WriteString("totalDifficulty", reader.GetString(11));
+                writer.WriteString("extraData", reader.GetString(12));
+                writer.WriteString("size", reader.GetString(13));
+                writer.WriteString("gasLimit", reader.GetString(14));
+                writer.WriteString("gasUsed", reader.GetString(15));
+                writer.WriteString("timestamp", reader.GetString(16));
                 writer.WriteString("uncles", reader.GetString(17));
                 var number = reader.GetInt32(18);
 
