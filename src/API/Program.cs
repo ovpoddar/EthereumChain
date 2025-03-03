@@ -1,23 +1,18 @@
-﻿using API;
-using Shared.Helpers;
-using API.Helpers;
+﻿using API.Handlers;
 using API.Models;
-using Shared.Processors.Database;
-using HTTP = API.Processors.HTTP;
-using System.Data.SQLite;
-using System.Net;
-using System.Net.Sockets;
-using API.Processors.WebSocket;
+using WebSocket = API.Processors.WebSocket;
 using Shared;
 using Shared.Processors.Communication;
-using API.Handlers;
+using Shared.Processors.Database;
+using System.Net;
+using HTTP = API.Processors.HTTP;
 
 using (var sqlConnection = StructureProcessor.InitializedDatabase())
 using (var httpListener = new HttpListener())
 using (var communication = new DataReceivedMemoryProcessor("EthereumChain", true))
-await using (var webSocketListener = new MinerSocketProcessor(sqlConnection, communication))
+await using (var webSocketListener = new WebSocket.MinerSocketProcessor(sqlConnection, communication))
 {
-    var eventProcesser = new ResponseProcessor(webSocketListener);
+    var eventProcesser = new WebSocket.ResponseProcessor(webSocketListener);
     eventProcesser.HookEventHandlers();
     httpListener.Prefixes.Add($"http://localhost:{Setting.RPCPort}/");
     httpListener.Prefixes.Add($"http://127.0.0.1:{Setting.RPCPort}/");
@@ -37,7 +32,7 @@ static async void ReceivedRequest(IAsyncResult ar)
         return;
 
     var context = requestProcesser.Listener.EndGetContext(ar);
-    if (RequestProcessor.CanProcessAsBlockChainResponse(context.Request.Headers))
+    if (WebSocket.RequestProcessor.CanProcessAsBlockChainResponse(context.Request.Headers))
     {
         var newMiner = await requestProcesser.WebSocketListener.HandleExpandNetworkAsync(context);
         if (newMiner != null) requestProcesser.WebSocketListener.StartReadResponse(newMiner);
