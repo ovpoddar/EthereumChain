@@ -62,6 +62,13 @@ public static class StructureProcessor
                 [TransactionIndex] TEXT,
                 [BlockNumber] INTEGER
             );
+
+            CREATE TABLE IF NOT EXISTS [Accounts](
+                [WalletId] TEXT,
+                [NormalizeWalletId] TEXT,
+                [Balance] INTEGER,
+                [LastUpdatedAt] REAL
+            );
         """, connection);
         await transactionCommand.ExecuteNonQueryAsync();
 

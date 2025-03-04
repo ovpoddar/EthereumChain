@@ -71,14 +71,21 @@ internal static class ResponseProcessor
                 var writer = new Utf8JsonWriter(response, _writerOptions);
                 RequestHandler.ProcessEthGetBlockByNumber(blockIdentifier,
                     fullData,
-                    method.Equals("eth_getblockbyhash", StringComparison.CurrentCultureIgnoreCase), 
-                    sqLiteConnection, 
+                    method.Equals("eth_getblockbyhash", StringComparison.CurrentCultureIgnoreCase),
+                    sqLiteConnection,
                     writer);
                 writer.Dispose();
                 break;
 
             case "eth_blocknumber":
                 response.Write(RequestHandler.ProcessEthBlockNumber(sqLiteConnection));
+                break;
+
+            case "eth_getbalance":
+                var walletAddress = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
+                Console.WriteLine($"{walletAddress[0]} {walletAddress[1]}");
+                // todo: fix this with proper implementation
+                response.Write(RequestHandler.ProcessEthGetBalance(walletAddress[1], sqLiteConnection));
                 break;
 
             case "bb_getaddress":
@@ -113,7 +120,6 @@ internal static class ResponseProcessor
             case "eth_createaccesslist":
             case "eth_feehistory":
             case "eth_getaccount":
-            case "eth_getbalance":
             case "eth_getblockreceipts":
             case "eth_getblocktransactioncountbyhash":
             case "eth_getblocktransactioncountbynumber":

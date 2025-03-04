@@ -212,4 +212,23 @@ internal static class RequestHandler
             sqLiteConnection.Close();
         }
     }
+
+    internal static ReadOnlySpan<byte> ProcessEthGetBalance(string walletAddress, SQLiteConnection sqLiteConnection)
+    {
+        try
+        {
+            sqLiteConnection.Open();
+            using var command = sqLiteConnection.CreateCommand();
+            command.CommandText = "SELECT TOP 1 [Balance] FROM  [Accounts] WHERE [NormalizeWalletId] = @WalletAddress";
+            // todo: convert to wei
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{reader.GetInt64(0)}\""));
+            return "\"0x00\""u8;
+        }
+        finally
+        {
+            sqLiteConnection.Close();
+        }
+    }
 }
