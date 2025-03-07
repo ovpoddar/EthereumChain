@@ -215,15 +215,18 @@ internal static class RequestHandler
 
     internal static ReadOnlySpan<byte> ProcessEthGetBalance(string walletAddress, SQLiteConnection sqLiteConnection)
     {
+        const ulong wei = 1000000000000000000;
         try
         {
             sqLiteConnection.Open();
             using var command = sqLiteConnection.CreateCommand();
             command.CommandText = "SELECT TOP 1 [Balance] FROM  [Accounts] WHERE [NormalizeWalletId] = @WalletAddress";
-            // todo: convert to wei
             using var reader = command.ExecuteReader();
             if (reader.Read())
-                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{reader.GetInt64(0)}\""));
+            {
+                var amount = reader.GetDecimal(0) * wei;
+                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{amount}\""));
+            }
             return "\"0x00\""u8;
         }
         finally
