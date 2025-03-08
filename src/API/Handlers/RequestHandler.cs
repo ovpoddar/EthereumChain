@@ -16,8 +16,11 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using API.Helpers;
+using System.Numerics;
+using Shared.Helpers;
 
 namespace API.Handlers;
+// todo: top is not a valid syntax in SQLite Fix it
 internal static class RequestHandler
 {
     internal static ReadOnlySpan<byte> ProcessEthGetCode(string accountAddress, string targetBlock)
@@ -92,7 +95,7 @@ internal static class RequestHandler
         }
     }
 
-    internal static void ProcessGeneratedBlock(ref Span<byte> data, ICommunication communication)
+    internal static void ProcessGeneratedBlock(ref Span<byte> data, IApplicationCommunication communication)
     {
         var baseBlock = new BaseBlock(data);
         MinerEvents.RaisedMinerEvent(MinerEventsTypes.BlockGenerated, baseBlock);
@@ -108,7 +111,7 @@ internal static class RequestHandler
         try
         {
             sqLiteConnection.Open();
-            using var command = BuildCommand(sqLiteConnection, tag, isHash);
+            using var command = BuildCommandToGetByNumber(sqLiteConnection, tag, isHash);
             using var reader = command.ExecuteReader();
             writer.WriteStartObject();
 
@@ -177,7 +180,7 @@ internal static class RequestHandler
         }
     }
 
-    private static SQLiteCommand BuildCommand(SQLiteConnection sqLiteConnection, string tag, bool isHash)
+    private static SQLiteCommand BuildCommandToGetByNumber(SQLiteConnection sqLiteConnection, string tag, bool isHash)
     {
         var command = sqLiteConnection.CreateCommand();
         StringBuilder sb = new StringBuilder();
@@ -213,25 +216,39 @@ internal static class RequestHandler
         }
     }
 
-    internal static ReadOnlySpan<byte> ProcessEthGetBalance(string walletAddress, SQLiteConnection sqLiteConnection)
+    internal static ReadOnlySpan<byte> ProcessEthGetBalance(string walletAddress, string blockNumber, SQLiteConnection sqLiteConnection)
     {
-        const ulong wei = 1000000000000000000;
         try
         {
             sqLiteConnection.Open();
             using var command = sqLiteConnection.CreateCommand();
-            command.CommandText = "SELECT TOP 1 [Balance] FROM  [Accounts] WHERE [NormalizeWalletId] = @WalletAddress";
+            command.CommandText = BuildCommandToGetBalance(blockNumber);
+            command.Parameters.AddWithValue("@WalletAddress", walletAddress);
             using var reader = command.ExecuteReader();
             if (reader.Read())
             {
-                var amount = reader.GetDecimal(0) * wei;
-                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{amount}\""));
+                var amount = reader.GetDecimal(0).ConvertToWei();
+                return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{amount:x}\""));
             }
-            return "\"0x00\""u8;
+            return "\"0x0\""u8;
         }
         finally
         {
             sqLiteConnection.Close();
         }
+    }
+
+    // TODO: FIX IT
+    private static string BuildCommandToGetBalance(string blockNumber)
+    {
+        var blocknumber = 0;
+        var sb = new StringBuilder();
+        sb.Append("SELECT [Amount] FROM [ChainDB] AS C LEFT JOIN [Accounts] AS A on C.Number = A.BlockNumber WHERE A.WalletId = @WalletAddress and C.Number <= @blockNumber order by C.Number DESC LIMIT 1");
+        sb.Append(blockNumber switch
+        {
+            "earliest" => "(SELECT [Number] top FROM [ChainDB] ORDER BY [Number] ASC)",
+            "latest" or "pending" => "(SELECT [Number] top FROM [ChainDB] ORDER BY [Number] DESC)",
+            _ => "@BlockNumber"
+        });
     }
 }

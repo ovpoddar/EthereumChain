@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Shared.Processors.Communication;
-public interface ICommunication
+public interface IApplicationCommunication
 {
     void SendData(byte[] data);
     void ReceivedData(Action<byte[]> action);

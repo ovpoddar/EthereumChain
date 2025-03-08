@@ -16,7 +16,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace Miner.Processors;
 internal static class MinerEventProcessor
 {
-    public static async ValueTask ProcessEvent(ICommunication communication, BlockChain chain, byte[] data, ChannelWriter<string> writer)
+    public static async ValueTask ProcessEvent(IApplicationCommunication communication, BlockChain chain, byte[] data, ChannelWriter<string> writer)
     {
         if (data[0] == (byte)CommunicationDataType.BaseBlock)
         {

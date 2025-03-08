@@ -9,13 +9,13 @@ using System.Threading.Channels;
 internal class MinerWorker : BackgroundService
 {
     private readonly ILogger<MinerWorker> _logger;
-    private readonly ICommunication _communication;
+    private readonly IApplicationCommunication _communication;
     private readonly ChannelReader<string> _reader;
     // make a thread safe write this veritable to track the 
     // latest variable and on change cancel the current task
     private string _latestHash;
 
-    public MinerWorker(ILogger<MinerWorker> logger, ICommunication _communication, ChannelReader<string> reader)
+    public MinerWorker(ILogger<MinerWorker> logger, IApplicationCommunication _communication, ChannelReader<string> reader)
     {
         this._logger = logger;
         this._communication = _communication;
@@ -31,9 +31,8 @@ internal class MinerWorker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             // implement the core for processing the block chain
-            // the work to calculate the hash and add the block to the chain 
+            // the work to calculate the hash and added to the block chain 
             // and publish it to network
-            // also add deduct the transaction to accounts
             _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
             await Task.Delay(1000, stoppingToken);
         }

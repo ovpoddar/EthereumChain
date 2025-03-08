@@ -80,6 +80,8 @@ public class BlockChain
                 transactionCommand.Parameters.AddWithValue("@BlockNumber", block.Number);
 
                 await transactionCommand.ExecuteNonQueryAsync();
+
+                // todo: add balance as transaction manner
             }
             await transaction.CommitAsync();
         }

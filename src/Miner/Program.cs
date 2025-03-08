@@ -29,7 +29,7 @@ builder.Logging
     .AddDebug();
 
 builder.Services.AddHostedService<MinerWorker>();
-builder.Services.AddSingleton<ICommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
+builder.Services.AddSingleton<IApplicationCommunication>(new DataReceivedMemoryProcessor("EthereumChain", false));
 builder.Services.AddSingleton(StructureProcessor.InitializedDatabase());
 builder.Services.AddSingleton(channel.Reader);
 builder.Services.AddSingleton(channel.Writer);
@@ -37,7 +37,7 @@ builder.Services.AddSingleton<BlockChain>();
 
 var app = builder.Build();
 
-var communication = app.Services.GetRequiredService<ICommunication>();
+var communication = app.Services.GetRequiredService<IApplicationCommunication>();
 var chain = app.Services.GetRequiredService<BlockChain>();
 var writer = app.Services.GetRequiredService<ChannelWriter<string>>();
 communication.ReceivedData(async (data) => await MinerEventProcessor.ProcessEvent(communication, chain, data, writer));

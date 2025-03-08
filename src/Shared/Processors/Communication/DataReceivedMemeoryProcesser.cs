@@ -13,7 +13,7 @@ using static System.Collections.Specialized.BitVector32;
 
 namespace Shared.Processors.Communication;
 
-public class DataReceivedMemoryProcessor : IDisposable, ICommunication
+public class DataReceivedMemoryProcessor : IDisposable, IApplicationCommunication
 {
     private readonly object DisposeLock = new();
     public bool IsDisposed { get; private set; }

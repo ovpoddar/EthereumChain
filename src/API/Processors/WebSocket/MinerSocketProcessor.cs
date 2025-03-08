@@ -16,9 +16,9 @@ internal class MinerSocketProcessor : IAsyncDisposable
 {
     private readonly List<System.Net.WebSockets.WebSocket> _minerConnections;
     private readonly SQLiteConnection _sqlConnection;
-    private readonly ICommunication _communication;
+    private readonly IApplicationCommunication _communication;
 
-    public MinerSocketProcessor(SQLiteConnection sqlConnection, ICommunication communication)
+    public MinerSocketProcessor(SQLiteConnection sqlConnection, IApplicationCommunication communication)
     {
         this._minerConnections = new(Setting.MinerNetworkCount);
         this._sqlConnection = sqlConnection;

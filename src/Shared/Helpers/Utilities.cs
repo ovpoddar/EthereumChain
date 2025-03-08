@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -143,4 +144,10 @@ public static class Utilities
 
     public static string DecodingFormNetworkTransfer(this string value) =>
         value.Replace("&nbsp;", " ");
+
+    public static BigInteger ConvertToWei(this decimal value)
+    {
+        const int gwei = 1000000000;
+        return new BigInteger((double)(value * gwei) * gwei);
+    }
 }

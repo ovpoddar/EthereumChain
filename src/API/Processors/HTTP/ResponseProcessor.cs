@@ -82,10 +82,8 @@ internal static class ResponseProcessor
                 break;
 
             case "eth_getbalance":
-                var walletAddress = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
-                Console.WriteLine($"{walletAddress[0]} {walletAddress[1]}");
-                // todo: fix this with proper implementation
-                response.Write(RequestHandler.ProcessEthGetBalance(walletAddress[1], sqLiteConnection));
+                var balanceDetails = RequestSerializer.GetArrayAs<string>(ref requestContext, "params", 2);
+                response.Write(RequestHandler.ProcessEthGetBalance(balanceDetails[0], balanceDetails[1], sqLiteConnection));
                 break;
 
             case "bb_getaddress":
