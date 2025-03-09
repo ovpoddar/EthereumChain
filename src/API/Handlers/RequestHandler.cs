@@ -1,26 +1,16 @@
-﻿using API.Models;
-using Shared.Processors.Communication;
-using System.Text.Json;
-using Nethereum.Merkle.Patricia;
-using Newtonsoft.Json.Linq;
+﻿using API.Helpers;
+using API.Models;
 using Shared.Core;
+using Shared.Helpers;
 using Shared.Models;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
+using Shared.Processors.Communication;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Linq;
-using System.Security.Principal;
+using System.Globalization;
 using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using API.Helpers;
-using System.Numerics;
-using Shared.Helpers;
+using System.Text.Json;
 
 namespace API.Handlers;
-// todo: top is not a valid syntax in SQLite Fix it
 internal static class RequestHandler
 {
     internal static ReadOnlySpan<byte> ProcessEthGetCode(string accountAddress, string targetBlock)
@@ -44,8 +34,8 @@ internal static class RequestHandler
             sqLiteConnection.Open();
             using var fetchCommand = new SQLiteCommand(tag switch
             {
-                "earliest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] ASC) AND [From] = @sender",
-                "latest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC) AND [From] = @sender",
+                "earliest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] FROM [ChainDB] ORDER BY [Number] ASC) AND [From] = @sender LIMIT 1",
+                "latest" => "SELECT count(*) FROM [Transaction] WHERE BlockNumber = (SELECT [NumberToHex] FROM [ChainDB] ORDER BY [Number] DESC) AND [From] = @sender LIMIT 1",
                 _ => "SELECT COUNT(*) FROM [Transaction] WHERE BlockNumber = (SELECT MAX(BlockNumber) FROM [Transaction]) AND [From] = @sender",
             }, sqLiteConnection);
 
@@ -183,13 +173,13 @@ internal static class RequestHandler
     private static SQLiteCommand BuildCommandToGetByNumber(SQLiteConnection sqLiteConnection, string tag, bool isHash)
     {
         var command = sqLiteConnection.CreateCommand();
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         sb.Append("SELECT [NumberToHex], [Hash], [ParentHash], [Nonce], [Sha3Uncles], [LogsBloom], [TransactionsRoot], [StateRoot], [ReceiptsRoot], [Miner], [Difficulty], [TotalDifficulty], [ExtraData], [Size], [GasLimit], [GasUsed], [TimeStamp], [Uncles], [Number] FROM [ChainDB] WHERE ");
         sb.Append(isHash ? "[Hash] = " : "[NumberToHex] = ");
         sb.Append(tag.ToLower() switch
         {
-            "earliest" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] ASC)",
-            "latest" or "pending" => "(SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC)",
+            "earliest" => "(SELECT [NumberToHex] FROM [ChainDB] ORDER BY [Number] ASC LIMIT 1)",
+            "latest" or "pending" => "(SELECT [NumberToHex] FROM [ChainDB] ORDER BY [Number] DESC LIMIT 1)",
             _ => "@Number"
         });
         command.CommandText = sb.ToString();
@@ -204,7 +194,7 @@ internal static class RequestHandler
         {
             sqLiteConnection.Open();
             using var command = sqLiteConnection.CreateCommand();
-            command.CommandText = "SELECT [NumberToHex] top FROM [ChainDB] ORDER BY [Number] DESC";
+            command.CommandText = "SELECT [NumberToHex] FROM [ChainDB] ORDER BY [Number] DESC LIMIT 1";
             using var reader = command.ExecuteReader();
             if (reader.Read())
                 return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{reader.GetString(0)}\""));
@@ -221,9 +211,7 @@ internal static class RequestHandler
         try
         {
             sqLiteConnection.Open();
-            using var command = sqLiteConnection.CreateCommand();
-            command.CommandText = BuildCommandToGetBalance(blockNumber);
-            command.Parameters.AddWithValue("@WalletAddress", walletAddress);
+            using var command = BuildCommandToGetBalance(sqLiteConnection, walletAddress, blockNumber);
             using var reader = command.ExecuteReader();
             if (reader.Read())
             {
@@ -238,17 +226,26 @@ internal static class RequestHandler
         }
     }
 
-    // TODO: FIX IT
-    private static string BuildCommandToGetBalance(string blockNumber)
+    private static SQLiteCommand BuildCommandToGetBalance(SQLiteConnection sqLiteConnection, string walletAddress, string blockNumber)
     {
-        var blocknumber = 0;
-        var sb = new StringBuilder();
-        sb.Append("SELECT [Amount] FROM [ChainDB] AS C LEFT JOIN [Accounts] AS A on C.Number = A.BlockNumber WHERE A.WalletId = @WalletAddress and C.Number <= @blockNumber order by C.Number DESC LIMIT 1");
-        sb.Append(blockNumber switch
+        var command = sqLiteConnection.CreateCommand();
+        command.CommandText = """
+                SELECT [Amount] 
+                FROM [ChainDB] AS C 
+                LEFT JOIN [Accounts] AS A 
+                ON C.Number = A.BlockNumber
+                WHERE A.WalletId = @WalletAddress 
+                AND C.Number <= @BlockNumber 
+                ORDER BY C.Number DESC 
+                LIMIT 1            
+            """;
+        command.Parameters.AddWithValue("@WalletAddress", walletAddress);
+        command.Parameters.AddWithValue("@BlockNumber", blockNumber switch
         {
-            "earliest" => "(SELECT [Number] top FROM [ChainDB] ORDER BY [Number] ASC)",
-            "latest" or "pending" => "(SELECT [Number] top FROM [ChainDB] ORDER BY [Number] DESC)",
-            _ => "@BlockNumber"
+            "earliest" => "(SELECT [Number] FROM [ChainDB] ORDER BY [Number] ASC LIMIT 1)",
+            "latest" or "pending" => "(SELECT [Number] FROM [ChainDB] ORDER BY [Number] DESC LIMIT 1)",
+            _ => int.Parse(blockNumber.EnsureNotStartsWith("0x"), NumberStyles.HexNumber)
         });
+        return command;
     }
 }

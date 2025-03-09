@@ -1,13 +1,6 @@
-﻿using Nethereum.Hex.HexConvertors;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Shared.Helpers;
 public static class Utilities
@@ -18,6 +11,20 @@ public static class Utilities
         value.EndsWith(suffix, comparison)
             ? value
             : value + suffix;
+
+    public static string EnsureStartsWith(this string value,
+        string prefix,
+        StringComparison comparison = StringComparison.InvariantCulture) =>
+        value.StartsWith(prefix, comparison)
+            ? value
+            : prefix + value;
+
+    public static string EnsureNotStartsWith(this string value,
+        string prefix,
+        StringComparison comparison = StringComparison.InvariantCulture) =>
+            value.StartsWith(prefix, comparison)
+                ? value[prefix.Length..]
+                : value;
 
     public static void HexArrayToDecimalArray(this Span<byte> hexArray, Span<byte> decimalArray)
     {
