@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 namespace Shared.Processors.Database;
 public static class StructureProcessor
 {
+    // TODO: ADD REQUIERED ANNONTATIONS
+    // TODO: TRY TO ADD RELATION MAPPING
     public static async Task MigrationStructure(SQLiteConnection connection)
     {
         if (connection == null)
@@ -19,56 +21,57 @@ public static class StructureProcessor
 
         using var transactionCommand = new SQLiteCommand("""
             CREATE TABLE IF NOT EXISTS [MemPool] (
-                [Id] TEXT,
-                [RawTransaction] Text
+                [Id] TEXT NOT NULL,
+                [RawTransaction] Text NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS [ChainDB] (
-                [Number] INTEGER,
-                [NumberToHex] TEXT,
-                [Hash] TEXT,
-                [ParentHash] TEXT,
-                [Nonce] INTEGER,
+                [Number] INTEGER NOT NULL,
+                [NumberToHex] TEXT NOT NULL,
+                [Hash] TEXT NOT NULL,
+                [ParentHash] TEXT NOT NULL,
+                [Nonce] INTEGER NOT NULL,
                 [Sha3Uncles] TEXT,
                 [LogsBloom] TEXT,
                 [TransactionsRoot] TEXT,
                 [StateRoot] TEXT,
                 [ReceiptsRoot] TEXT,
-                [Miner] TEXT,
+                [Miner] TEXT NOT NULL,
                 [Difficulty] TEXT,
                 [TotalDifficulty] TEXT,
                 [ExtraData] TEXT,
                 [Size] TEXT,
                 [GasLimit] TEXT,
                 [GasUsed] TEXT,
-                [TimeStamp] TEXT,
+                [TimeStamp] TEXT NOT NULL,
                 [TransactionsId] TEXT,
                 [Uncles] TEXT
             );
         
             CREATE TABLE IF NOT EXISTS [Transaction](
-                [Id] TEXT,
-                [Nonce] TEXT,
+                [Id] TEXT NOT NULL,
+                [Nonce] TEXT NOT NULL,
                 [GasPrice] TEXT,
                 [GasLimit] TEXT, 
-                [To] TEXT,
-                [From] TEXT,
+                [To] TEXT NOT NULL,
+                [From] TEXT NOT NULL,
                 [Value] TEXT,
-                [Data] TEXT,
+                [Data] TEXT NOT NULL,
                 [V] TEXT,
                 [R] TEXT,
                 [S] TEXT,
-                [RawTransaction] TEXT,
+                [RawTransaction] TEXT NOT NULL,
                 [TransactionIndex] TEXT,
-                [BlockNumber] INTEGER
+                [BlockNumber] INTEGER NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS [Accounts](
-                [WalletId] TEXT,
-                [NormalizeWalletId] TEXT,
-                [Amount] INTEGER,
-                [BlockNumber] INTEGER,
-                [TransactionId] TEXT
+                [OrderIndex] INTEGER PRIMARY KEY AUTOINCREMENT,
+                [WalletId] TEXT NOT NULL,
+                [NormalizeWalletId] TEXT NOT NULL,
+                [Amount] INTEGER NOT NULL,
+                [BlockNumber] INTEGER NOT NULL,
+                [TransactionId] TEXT NOT NULL
             );
         """, connection);
         await transactionCommand.ExecuteNonQueryAsync();

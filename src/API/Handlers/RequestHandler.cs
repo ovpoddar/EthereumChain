@@ -230,15 +230,15 @@ internal static class RequestHandler
     {
         var command = sqLiteConnection.CreateCommand();
         command.CommandText = """
-                SELECT [Amount] 
-                FROM [ChainDB] AS C 
-                LEFT JOIN [Accounts] AS A 
-                ON C.Number = A.BlockNumber
-                WHERE A.WalletId = @WalletAddress 
-                AND C.Number <= @BlockNumber 
-                ORDER BY C.Number DESC 
-                LIMIT 1            
-            """;
+            SELECT [Amount] 
+            FROM [ChainDB] AS C 
+            LEFT JOIN [Accounts] AS A 
+            ON C.Number = A.BlockNumber
+            WHERE A.WalletId = @WalletAddress 
+            AND C.Number <= @BlockNumber 
+            ORDER BY A.OrderIndex DESC 
+            LIMIT 1            
+        """;
         command.Parameters.AddWithValue("@WalletAddress", walletAddress);
         command.Parameters.AddWithValue("@BlockNumber", blockNumber switch
         {
