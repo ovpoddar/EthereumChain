@@ -19,9 +19,8 @@ public class BlockChain
     /// Add block to chain
     /// </summary>
     /// <param name="block"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception">throw a exception if it failed to put items in database.</exception>
-    public async Task AddBlock(Block block)
+    /// <returns>bool if the adding block is a invalid one</returns>
+    public async Task<bool> AddBlock(Block block)
     {
         await _connection.OpenAsync();
         using var transaction = _connection.BeginTransaction();
@@ -81,18 +80,66 @@ public class BlockChain
 
                 await transactionCommand.ExecuteNonQueryAsync();
 
-                // todo: add balance as transaction manner
+                var updateBalance = await UpdateTransaction(_connection,
+                    transaction, 
+                    blockTransaction,
+                    block.Number,
+                    blockTransaction.Id);
+                if (!updateBalance) throw new Exception("Failed to update balance");
             }
             await transaction.CommitAsync();
+            return true;
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex);
             transaction.Rollback();
-            throw new Exception(ex.Message);
+            return false;
         }
         finally
         {
             await _connection.CloseAsync();
         }
     }
+
+    // TODO: deal with the transaction amount first
+    private async Task<bool> UpdateTransaction(SQLiteConnection connection,
+        SQLiteTransaction transaction,
+        Transaction blockTransaction,
+        int blockNumber,
+        string transactionId)
+    {
+        var fromBalance = await GetBalance(blockTransaction.From);
+        if (!doesFromAddressHaveEnoughBalance(fromBalance, blockTransaction.Value))
+        {
+            return false;
+        }
+        var toBalance = await GetBalance(blockTransaction.To);
+
+        using var command = new SQLiteCommand("""
+            INSERT INTO [Accounts] (WalletId, NormalizeWalletId, Amount, BlockNumber, TransactionId)
+            VALUES (@FormWalletId, @FormNormalizeWalletId, @FormAmount, @BlockNumber, @TransactionId);
+
+            INSERT INTO [Accounts] (WalletId, NormalizeWalletId, Amount, BlockNumber, TransactionId)
+            VALUES (@ToWalletId, @ToNormalizeWalletId, @ToAmount, @BlockNumber, @TransactionId);
+        """, connection, transaction);
+
+        command.Parameters.AddWithValue("@FormWalletId", blockTransaction.From);
+        command.Parameters.AddWithValue("@FormNormalizeWalletId", blockTransaction.From.ToUpper());
+        command.Parameters.AddWithValue("@FormAmount", fromBalance - blockTransaction.Value);
+        command.Parameters.AddWithValue("@ToWalletId", blockTransaction.To);
+        command.Parameters.AddWithValue("@ToNormalizeWalletId", blockTransaction.To.ToUpper());
+        command.Parameters.AddWithValue("@ToAmount", toBalance + blockTransaction.Value);
+        command.Parameters.AddWithValue("@BlockNumber", blockNumber);
+        command.Parameters.AddWithValue("@TransactionId", transactionId);
+        await command.ExecuteNonQueryAsync();
+        return true;
+    }
+    // TODO: can be inline
+    private bool doesFromAddressHaveEnoughBalance(decimal fromBalance, string value)
+    {
+        throw new NotImplementedException();
+    }
+
+    private async Task<decimal> GetBalance(string address) { return 0; }
 }

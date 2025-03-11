@@ -8,7 +8,7 @@ public class Transaction
 {
     private readonly ulong _gasPrice;
     private readonly ulong _gasLimit;
-    private readonly ulong _value;
+    private readonly ulong _value; // TODO: suppose to be decimal assuming
     private readonly Guid _id;
     internal int _transactionIndex;
 
