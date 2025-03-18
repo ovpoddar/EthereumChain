@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared.Processors.Database;
+namespace Shared.Processors.Database; 
 public static class StructureProcessor
 {
     // TODO: ADD REQUIERED ANNONTATIONS
@@ -69,7 +69,7 @@ public static class StructureProcessor
                 [OrderIndex] INTEGER PRIMARY KEY AUTOINCREMENT,
                 [WalletId] TEXT NOT NULL,
                 [NormalizeWalletId] TEXT NOT NULL,
-                [Amount] INTEGER NOT NULL,
+                [Amount] TEXT NOT NULL,
                 [BlockNumber] INTEGER NOT NULL,
                 [TransactionId] TEXT NOT NULL
             );

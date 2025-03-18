@@ -18,7 +18,7 @@ public class Transaction
     public string GasLimit { get => _gasLimit.ToString("X"); }
     public string To { get; }
     public string From { get; }
-    public string Value { get; }
+    public string Value { get; } // this is wei value as hex string
     public string Data { get; }
     public string V { get; }
     public string R { get; }

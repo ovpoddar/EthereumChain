@@ -3,7 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -81,7 +83,7 @@ public class BlockChain
                 await transactionCommand.ExecuteNonQueryAsync();
 
                 var updateBalance = await UpdateTransaction(_connection,
-                    transaction, 
+                    transaction,
                     blockTransaction,
                     block.Number,
                     blockTransaction.Id);
@@ -102,19 +104,19 @@ public class BlockChain
         }
     }
 
-    // TODO: deal with the transaction amount first
-    private async Task<bool> UpdateTransaction(SQLiteConnection connection,
+    private static async Task<bool> UpdateTransaction(SQLiteConnection connection,
         SQLiteTransaction transaction,
         Transaction blockTransaction,
         int blockNumber,
         string transactionId)
     {
-        var fromBalance = await GetBalance(blockTransaction.From);
-        if (!doesFromAddressHaveEnoughBalance(fromBalance, blockTransaction.Value))
+        var fromBalance = await GetBalance(connection, blockTransaction.From);
+        var transactionAmount = BigInteger.Parse(blockTransaction.Value, NumberStyles.AllowHexSpecifier).ConvertToEtherAmount();
+        if (fromBalance >= transactionAmount)
         {
             return false;
         }
-        var toBalance = await GetBalance(blockTransaction.To);
+        var toBalance = await GetBalance(connection, blockTransaction.To);
 
         using var command = new SQLiteCommand("""
             INSERT INTO [Accounts] (WalletId, NormalizeWalletId, Amount, BlockNumber, TransactionId)
@@ -126,20 +128,24 @@ public class BlockChain
 
         command.Parameters.AddWithValue("@FormWalletId", blockTransaction.From);
         command.Parameters.AddWithValue("@FormNormalizeWalletId", blockTransaction.From.ToUpper());
-        command.Parameters.AddWithValue("@FormAmount", fromBalance - blockTransaction.Value);
+        command.Parameters.AddWithValue("@FormAmount", fromBalance - transactionAmount);
         command.Parameters.AddWithValue("@ToWalletId", blockTransaction.To);
         command.Parameters.AddWithValue("@ToNormalizeWalletId", blockTransaction.To.ToUpper());
-        command.Parameters.AddWithValue("@ToAmount", toBalance + blockTransaction.Value);
+        command.Parameters.AddWithValue("@ToAmount", toBalance + transactionAmount);
         command.Parameters.AddWithValue("@BlockNumber", blockNumber);
         command.Parameters.AddWithValue("@TransactionId", transactionId);
         await command.ExecuteNonQueryAsync();
         return true;
     }
-    // TODO: can be inline
-    private bool doesFromAddressHaveEnoughBalance(decimal fromBalance, string value)
-    {
-        throw new NotImplementedException();
-    }
 
-    private async Task<decimal> GetBalance(string address) { return 0; }
+    private static async Task<decimal> GetBalance(SQLiteConnection connection, string address)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "select [Amount] from [Accounts] where NormalizeWalletId = @WalletAddressNormalize order by [OrderIndex] desc limit 1";
+        command.Parameters.AddWithValue("@WalletAddressNormalize", address.ToUpper());
+        using var reader = await command.ExecuteReaderAsync();
+        return reader.Read()
+            ? BigInteger.Parse(reader.GetString(0), NumberStyles.AllowHexSpecifier).ConvertToEtherAmount()
+            : 0;
+    }
 }
