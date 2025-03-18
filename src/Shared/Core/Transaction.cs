@@ -1,6 +1,7 @@
 ﻿using Nethereum.Model;
 using Nethereum.Signer;
 using Shared.Helpers;
+using System.Numerics;
 using System.Text;
 
 namespace Shared.Core;
@@ -8,7 +9,6 @@ public class Transaction
 {
     private readonly ulong _gasPrice;
     private readonly ulong _gasLimit;
-    private readonly ulong _value; // TODO: suppose to be decimal assuming
     private readonly Guid _id;
     internal int _transactionIndex;
 
@@ -18,7 +18,7 @@ public class Transaction
     public string GasLimit { get => _gasLimit.ToString("X"); }
     public string To { get; }
     public string From { get; }
-    public string Value { get => _value.ToString("x"); }
+    public string Value { get; }
     public string Data { get; }
     public string V { get; }
     public string R { get; }
@@ -40,7 +40,7 @@ public class Transaction
         _gasLimit = Utilities.GetLongFromHexArray(transactionDetails.GasLimit);
         To = Encoding.UTF8.GetString(transactionDetails.ReceiveAddress);
         From = transactionDetails.GetSenderAddress();
-        _value = Utilities.GetLongFromHexArray(transactionDetails.Value);
+        Value = Convert.ToHexString(transactionDetails.Value);
         Data = Encoding.UTF8.GetString(transactionDetails.Data ?? []);
         V = Encoding.UTF8.GetString(transactionDetails.Signature.V);
         R = Encoding.UTF8.GetString(transactionDetails.Signature.R);

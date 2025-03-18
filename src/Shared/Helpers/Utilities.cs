@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Nethereum.Hex.HexConvertors;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -152,9 +153,15 @@ public static class Utilities
     public static string DecodingFormNetworkTransfer(this string value) =>
         value.Replace("&nbsp;", " ");
 
-    public static BigInteger ConvertToWei(this decimal value)
-    {
-        const int gwei = 1000000000;
-        return new BigInteger((double)(value * gwei) * gwei);
-    }
+    private const int _gweiMultiplier = 1000000000;
+
+    public static BigInteger ConvertAmountToWei(this decimal value) => 
+        new BigInteger((double)(value * _gweiMultiplier) * _gweiMultiplier);
+
+    public static decimal ConvertGWeiToAmount(this decimal value) =>
+        value / _gweiMultiplier;
+
+    public static decimal ConvertToEtherAmount(this BigInteger value) =>
+        (decimal)(value / _gweiMultiplier) / _gweiMultiplier;
+
 }
