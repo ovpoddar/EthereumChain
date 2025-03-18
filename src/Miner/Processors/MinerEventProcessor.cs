@@ -39,16 +39,14 @@ internal static class MinerEventProcessor
                         return;
                     }
                 }
-
-                response[1] = Convert.ToByte(true);
-                communication.SendData(response);
-                var task1 = chain.AddBlock(block);
-                var task2 = writer.WriteAsync(calculatedHash).AsTask();
-                await Task.WhenAll(task1, task2);
+                var transactionStatus = await chain.AddBlock(block);
+                response[1] = Convert.ToByte(transactionStatus);
+                if (transactionStatus) await writer.WriteAsync(calculatedHash);
             }
+            communication.SendData(response);
         }
 
-        
+
         Console.WriteLine("Processing Miner Event");
     }
 
