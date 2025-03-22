@@ -164,4 +164,9 @@ public static class Utilities
     public static decimal ConvertToEtherAmount(this BigInteger value) =>
         (decimal)(value / _gweiMultiplier) / _gweiMultiplier;
 
+    public static decimal ToEtherBalance(this string value)
+    {
+        // hex to bigint wei to ether
+        throw new NotImplementedException();
+    }
 }

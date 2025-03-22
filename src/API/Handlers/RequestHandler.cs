@@ -215,7 +215,7 @@ internal static class RequestHandler
             using var reader = command.ExecuteReader();
             if (reader.Read())
             {
-                var amount = reader.GetDecimal(0).ConvertToWei();
+                var amount = reader.GetDecimal(0).ConvertAmountToWei();
                 return new ReadOnlySpan<byte>(Encoding.UTF8.GetBytes($"\"{amount:x}\""));
             }
             return "\"0x0\""u8;
