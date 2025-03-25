@@ -38,9 +38,26 @@ internal class MinerWorker : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // implement the core for processing the block chain
-            // the work to calculate the hash and added to the block chain 
-            // and publish it to network
+            var block = new Block(Setting.MinerAddress, _latestHash)
+            {
+                Sha3Uncles = string.Empty,
+                LogsBloom = string.Empty,
+                TransactionsRoot = string.Empty,
+                StateRoot = string.Empty,
+                ReceiptsRoot = string.Empty,
+                Difficulty = string.Empty,
+                TotalDifficulty = string.Empty,
+                ExtraData = string.Empty,
+                Size = string.Empty
+            };
+
+            var hash = block.CalculateHash();
+            // todo: declare a difficulty level which should be collect from the network
+            // base on it mine the block and verify the hash
+            // if its a valid block then send it to the network
+            // if not then add more transaction to the block
+            // and try again
+           
             _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
             await Task.Delay(1000, stoppingToken);
         }
@@ -52,6 +69,20 @@ internal class MinerWorker : BackgroundService
     private void ResetCheck()
     {
         _counter = 0;
+    }
+
+    private async Task<Transaction[]> GetProfitableTransactions(int count)
+    {
+        var transactions = new Transaction[count];
+        var index = 0;
+        while (index <= count)
+        {
+            var transaction = await GetProfitableTransaction();
+            if (transaction == null)
+                break;
+            transactions[index] = transaction;
+        }
+        return transactions;
     }
 
     private async Task<Transaction?> GetProfitableTransaction()
