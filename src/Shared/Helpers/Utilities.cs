@@ -6,23 +6,24 @@ using System.Runtime.CompilerServices;
 namespace Shared.Helpers;
 public static class Utilities
 {
-    public static string EnsureEndsWith(this string value,
-        string suffix,
-        StringComparison comparison = StringComparison.InvariantCulture) =>
+    private const int _gweiMultiplier = 1000000000;
+    public static string EnsureEndsWith(this string value, string suffix, StringComparison comparison = StringComparison.InvariantCulture) =>
         value.EndsWith(suffix, comparison)
             ? value
             : value + suffix;
 
-    public static string EnsureStartsWith(this string value,
-        string prefix,
-        StringComparison comparison = StringComparison.InvariantCulture) =>
+    public static string EnsureStartsWith(this string value, string prefix, StringComparison comparison = StringComparison.InvariantCulture) =>
         value.StartsWith(prefix, comparison)
             ? value
             : prefix + value;
 
-    public static string EnsureNotStartsWith(this string value,
-        string prefix,
-        StringComparison comparison = StringComparison.InvariantCulture) =>
+    public static string EnsureNotStartsWith(this string value, string prefix, StringComparison comparison = StringComparison.InvariantCulture) =>
+            value.StartsWith(prefix, comparison)
+                ? value[prefix.Length..]
+                : value;
+
+
+    public static ReadOnlySpan<char> EnsureNotStartsWith(this ReadOnlySpan<char> value, ReadOnlySpan<char> prefix, StringComparison comparison = StringComparison.InvariantCulture) =>
             value.StartsWith(prefix, comparison)
                 ? value[prefix.Length..]
                 : value;
@@ -128,6 +129,7 @@ public static class Utilities
             normalArray[j++] = ToUpper(b);
         }
     }
+
     static byte ToUpper(int value)
     {
         value &= 0xF;
@@ -153,8 +155,6 @@ public static class Utilities
     public static string DecodingFormNetworkTransfer(this string value) =>
         value.Replace("&nbsp;", " ");
 
-    private const int _gweiMultiplier = 1000000000;
-
     public static BigInteger ConvertAmountToWei(this decimal value) => 
         new BigInteger((double)(value * _gweiMultiplier) * _gweiMultiplier);
 
@@ -166,7 +166,8 @@ public static class Utilities
 
     public static decimal ToEtherBalance(this string value)
     {
-        // hex to bigint wei to ether
+        // TODO: hex to bigint wei to ether
         throw new NotImplementedException();
     }
+
 }

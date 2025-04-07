@@ -10,6 +10,7 @@ using Shared.Processors.Communication;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Reflection.PortableExecutable;
+using System.Threading;
 using System.Threading.Channels;
 
 internal class MinerWorker : BackgroundService
@@ -18,48 +19,92 @@ internal class MinerWorker : BackgroundService
     private readonly IApplicationCommunication _communication;
     private readonly SQLiteConnection _connection;
     private readonly ChannelReader<string> _reader;
+    private CancellationTokenSource _cancellationTokenSource;
     // make a thread safe write this veritable to track the 
     // latest variable and on change cancel the current task
     private string _latestHash;
 
     public MinerWorker(ILogger<MinerWorker> logger, IApplicationCommunication _communication, SQLiteConnection connection, ChannelReader<string> reader)
     {
+        _cancellationTokenSource = new();
         this._logger = logger;
         this._communication = _communication;
         _connection = connection;
         this._reader = reader;
         Task.Run(async () =>
         {
+            _cancellationTokenSource.Cancel();
             _latestHash = await _reader.ReadAsync();
         });
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var usableThreads = Setting.ThreadUsage == 0
+            ? Environment.ProcessorCount
+            : Setting.ThreadUsage < 0
+                ? Environment.ProcessorCount + Setting.ThreadUsage
+                : Setting.ThreadUsage;
+        var workingSet = new List<Transaction>();
+        var threads = new Thread[usableThreads];
         while (!stoppingToken.IsCancellationRequested)
         {
-            var block = new Block(Setting.MinerAddress, _latestHash)
-            {
-                Sha3Uncles = string.Empty,
-                LogsBloom = string.Empty,
-                TransactionsRoot = string.Empty,
-                StateRoot = string.Empty,
-                ReceiptsRoot = string.Empty,
-                Difficulty = string.Empty,
-                TotalDifficulty = string.Empty,
-                ExtraData = string.Empty,
-                Size = string.Empty
-            };
-
-            var hash = block.CalculateHash();
             // todo: declare a difficulty level which should be collect from the network
             // base on it mine the block and verify the hash
             // if its a valid block then send it to the network
             // if not then add more transaction to the block
             // and try again
-           
-            _logger.LogCritical("MinerWorker running at: {0}", DateTimeOffset.Now.Ticks);
-            await Task.Delay(1000, stoppingToken);
+
+            Block? generatedBlock = null;
+            var totalChunks = int.MaxValue / usableThreads;
+
+            for (var i = 0; i < usableThreads; i++)
+            {
+                var workingRangeStart = i * totalChunks;
+                var workingRangeEnd = workingRangeStart + totalChunks;
+                workingSet.AddRange(await GetProfitableTransactions(10));
+                threads[i] = new Thread(() =>
+                {
+                    var block = new Block(Setting.DefaultMinerAddress, _latestHash)
+                    {
+                        Sha3Uncles = string.Empty,
+                        LogsBloom = string.Empty,
+                        TransactionsRoot = string.Empty,
+                        StateRoot = string.Empty,
+                        ReceiptsRoot = string.Empty,
+                        Difficulty = string.Empty,
+                        TotalDifficulty = string.Empty,
+                        ExtraData = string.Empty,
+                        Size = string.Empty
+                    };
+                    block.Transactions.AddRange(workingSet);
+                    for (; workingRangeStart < workingRangeEnd; workingRangeStart++)
+                    {
+                        block.Nonce = workingRangeStart;
+                        var hash = block.CalculateHash();
+                        if (_cancellationTokenSource.IsCancellationRequested)
+                            break;
+
+                        if (Setting.VerifyBlockExecution(hash))
+                        {
+                            _cancellationTokenSource.Cancel();
+                            generatedBlock = block.DeepClone();
+                            break;
+                        }
+                    }
+                });
+                threads[i].Start();
+            }
+
+            foreach (var thread in threads)
+                thread.Join();
+
+            if (generatedBlock is not null)
+            {
+                //publish it to the network
+                ResetCheck();
+                Thread.Sleep(1000);
+            }
         }
     }
 
@@ -69,6 +114,7 @@ internal class MinerWorker : BackgroundService
     private void ResetCheck()
     {
         _counter = 0;
+        _cancellationTokenSource = new();
     }
 
     private async Task<Transaction[]> GetProfitableTransactions(int count)

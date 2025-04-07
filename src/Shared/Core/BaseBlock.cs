@@ -238,11 +238,11 @@ public class BaseBlock : MinerEventArgs
             Uncles = baseBlock.Uncles.Split(' '),
             TransactionsRoot = baseBlock.TransactionsRoot
         };
-        var index = 0;
-        foreach (Transaction items in baseBlock.Transactions)
+        for (var i = 0; i < baseBlock.Transactions.Count; i++)
         {
-            items.SetTransactionIndex(index++);
-            block.Transactions.Add(items);
+            var transaction = ((Transaction)baseBlock.Transactions[i]);
+            transaction.SetTransactionIndex(i);
+            block.Transactions.Add(transaction);
         }
         block.Transactions.AddRange([.. baseBlock.Transactions.Select(t => (Transaction)t)]);
         return block;

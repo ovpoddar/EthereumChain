@@ -1,4 +1,5 @@
 ﻿using Nethereum.ABI.Util;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -45,9 +46,18 @@ public class Block
 
     public string CalculateHash()
     {
-        var rawData = $"{NumberToHex} {Hash} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a._transactionIndex).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
+        var rawData = $"{NumberToHex} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a._transactionIndex).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        return BitConverter.ToString(bytes).Replace("-", "");
+        var result = Convert.ToHexString(bytes);
+        Hash = result;
+        return result;
     }
 
+    public Block DeepClone()
+    {
+        var clonedBlock = (Block)this.MemberwiseClone();
+        clonedBlock.Transactions.AddRange(this.Transactions);
+        clonedBlock.Uncles = (string[])this.Uncles.Clone();
+        return clonedBlock;
+    }
 }
