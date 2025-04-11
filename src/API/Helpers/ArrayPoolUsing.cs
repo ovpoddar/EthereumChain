@@ -64,4 +64,13 @@ internal struct ArrayPoolUsing<T> : IDisposable
             _values[index] = value;
         }
     }
+
+    public readonly Span<T> this[Range range]
+    {
+        get
+        {
+            ArgumentNullException.ThrowIfNull(_values);
+            return _values[range];
+        }
+    }
 }

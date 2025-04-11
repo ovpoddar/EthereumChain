@@ -6,10 +6,13 @@ using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.Core;
 using Shared.Helpers;
+using Shared.Models;
 using Shared.Processors.Communication;
+using System.Buffers;
 using System.Data.Common;
 using System.Data.SQLite;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Channels;
 
@@ -55,7 +58,7 @@ internal class MinerWorker : BackgroundService
             // if not then add more transaction to the block
             // and try again
 
-            Block? generatedBlock = null;
+            byte[]? generatedBlock = null;
             var totalChunks = int.MaxValue / usableThreads;
 
             for (var i = 0; i < usableThreads; i++)
@@ -88,7 +91,7 @@ internal class MinerWorker : BackgroundService
                         if (Setting.VerifyBlockExecution(hash))
                         {
                             _cancellationTokenSource.Cancel();
-                            generatedBlock = block.DeepClone();
+                            generatedBlock = block;
                             break;
                         }
                     }
@@ -101,7 +104,10 @@ internal class MinerWorker : BackgroundService
 
             if (generatedBlock is not null)
             {
-                //publish it to the network
+                var request = ArrayPool<byte>.Shared.Rent(generatedBlock.Length + 1);
+                request[0] = (byte)CommunicationDataType.BaseBlock;
+                generatedBlock.CopyTo(request, 1);
+                _communication.SendData(request);
                 ResetCheck();
                 Thread.Sleep(1000);
             }

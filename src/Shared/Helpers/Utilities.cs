@@ -155,7 +155,7 @@ public static class Utilities
     public static string DecodingFormNetworkTransfer(this string value) =>
         value.Replace("&nbsp;", " ");
 
-    public static BigInteger ConvertAmountToWei(this decimal value) => 
+    public static BigInteger ConvertAmountToWei(this decimal value) =>
         new BigInteger((double)(value * _gweiMultiplier) * _gweiMultiplier);
 
     public static decimal ConvertGWeiToAmount(this decimal value) =>
@@ -164,10 +164,7 @@ public static class Utilities
     public static decimal ConvertToEtherAmount(this BigInteger value) =>
         (decimal)(value / _gweiMultiplier) / _gweiMultiplier;
 
-    public static decimal ToEtherBalance(this string value)
-    {
-        // TODO: hex to bigint wei to ether
-        throw new NotImplementedException();
-    }
-
+    public static decimal ToEtherBalance(this string value) =>
+        BigInteger.Parse(value, System.Globalization.NumberStyles.HexNumber)
+            .ConvertToEtherAmount();
 }

@@ -92,7 +92,7 @@ internal static class RequestHandler
 
         using var sendingDataWithContext = new ArrayPoolUsing<byte>(data.Length + 1);
         sendingDataWithContext[0] = (byte)CommunicationDataType.BaseBlock;
-        data.CopyTo(sendingDataWithContext);
+        data.CopyTo(sendingDataWithContext[1..]);
         communication.SendData(sendingDataWithContext);
     }
 
