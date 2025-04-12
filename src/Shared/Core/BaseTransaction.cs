@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Shared.Core;
 
-public class BaseTransaction : MinerEventArgs
+public class BaseTransaction : IMinerEventArgs
 {
     public Guid TransactionId { get; }
     public string RawTransaction { get; }
@@ -23,10 +23,10 @@ public class BaseTransaction : MinerEventArgs
         this.RawTransaction = Encoding.UTF8.GetString(data[17..^1]);
     }
 
-    public override ushort GetWrittenByteSize() =>
+    public ushort GetWrittenByteSize() =>
         (ushort)(18 + Encoding.UTF8.GetByteCount(this.RawTransaction));
 
-    public override RequestEvent GetRequestEvent(Span<byte> context)
+    public RequestEvent GetRequestEvent(Span<byte> context)
     {
         context[16] = 0;
         context[^1] = 0;

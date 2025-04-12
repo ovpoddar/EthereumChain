@@ -58,7 +58,7 @@ internal class MinerWorker : BackgroundService
             // if not then add more transaction to the block
             // and try again
 
-            byte[]? generatedBlock = null;
+            BaseBlock? generatedBlock = null;
             var totalChunks = int.MaxValue / usableThreads;
 
             for (var i = 0; i < usableThreads; i++)
@@ -104,9 +104,10 @@ internal class MinerWorker : BackgroundService
 
             if (generatedBlock is not null)
             {
-                var request = ArrayPool<byte>.Shared.Rent(generatedBlock.Length + 1);
+                var blockToArray = generatedBlock.ToByteArray();
+                var request = ArrayPool<byte>.Shared.Rent(blockToArray.Length + 1);
                 request[0] = (byte)CommunicationDataType.BaseBlock;
-                generatedBlock.CopyTo(request, 1);
+                blockToArray.CopyTo(request, 1);
                 _communication.SendData(request);
                 ResetCheck();
                 Thread.Sleep(1000);

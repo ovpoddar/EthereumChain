@@ -5,26 +5,10 @@ using System.Text;
 
 namespace Shared.Core;
 
-public class Block
+public class Block : BaseInternalBlock
 {
-    public int Number { get; set; }
     public string NumberToHex { get => $"0x{Number:x}"; }
-    public string Hash { get; set; }
-    public string ParentHash { get; set; }
-    public long Nonce { get; set; }
-    public required string Sha3Uncles { get; set; }
-    public required string LogsBloom { get; set; }
-    public required string TransactionsRoot { get; set; }
-    public required string StateRoot { get; set; }
-    public required string ReceiptsRoot { get; set; }
-    public string Miner { get; }
-    public required string Difficulty { get; set; }
-    public required string TotalDifficulty { get; set; }
-    public required string ExtraData { get; set; }
-    public required string Size { get; set; }
-    public ulong GasLimit { get; set; }
-    public ulong GasUsed { get; set; }
-    public string TimeStamp { get; }
+    public string TimeStamp { get; init; }
     public List<Transaction> Transactions { get; }
     public string[] Uncles { get; set; }
 
@@ -39,25 +23,40 @@ public class Block
         Hash = CalculateHash();
     }
 
-    public Block(byte[] block)
-    {
-
-    }
-
     public string CalculateHash()
     {
-        var rawData = $"{NumberToHex} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a._transactionIndex).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-        var result = Convert.ToHexString(bytes);
-        Hash = result;
-        return result;
+        var rawData = $"{Number} {ParentHash} {Nonce} {Sha3Uncles} {LogsBloom} {TransactionsRoot} {StateRoot} {ReceiptsRoot} {Miner} {Difficulty} {TotalDifficulty} {ExtraData} {Size} {GasLimit} {GasUsed} {TimeStamp} {string.Join(' ', Transactions.OrderBy(a => a._transactionIndex).Select(a => a.RawTransaction))} {string.Join(' ', Uncles)}";
+        return base.CalculateHash(rawData);
     }
 
-    public Block DeepClone()
+
+    public static implicit operator Block(BaseBlock baseBlock)
     {
-        var clonedBlock = (Block)this.MemberwiseClone();
-        clonedBlock.Transactions.AddRange(this.Transactions);
-        clonedBlock.Uncles = (string[])this.Uncles.Clone();
-        return clonedBlock;
+        var block = new Block(baseBlock.Miner, baseBlock.ParentHash)
+        {
+            Difficulty = baseBlock.Difficulty,
+            LogsBloom = baseBlock.LogsBloom,
+            ExtraData = baseBlock.ExtraData,
+            GasLimit = baseBlock.GasLimit,
+            GasUsed = baseBlock.GasUsed,
+            Hash = baseBlock.Hash,
+            Nonce = baseBlock.Nonce,
+            Number = baseBlock.Number,
+            ParentHash = baseBlock.ParentHash,
+            ReceiptsRoot = baseBlock.ReceiptsRoot,
+            Sha3Uncles = baseBlock.Sha3Uncles,
+            Size = baseBlock.Size,
+            StateRoot = baseBlock.StateRoot,
+            TotalDifficulty = baseBlock.TotalDifficulty,
+            Uncles = baseBlock.Uncles.Split(' '),
+            TransactionsRoot = baseBlock.TransactionsRoot
+        };
+        for (var i = 0; i < baseBlock.Transactions.Count; i++)
+        {
+            var transaction = ((Transaction)baseBlock.Transactions[i]);
+            transaction.SetTransactionIndex(i);
+            block.Transactions.Add(transaction);
+        }
+        return block;
     }
 }

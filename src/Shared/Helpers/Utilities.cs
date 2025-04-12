@@ -1,7 +1,14 @@
 ﻿using Nethereum.Hex.HexConvertors;
+using Nethereum.Merkle.Patricia;
+using Shared.Core;
+using System.Buffers;
+using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text;
 
 namespace Shared.Helpers;
 public static class Utilities
@@ -167,4 +174,83 @@ public static class Utilities
     public static decimal ToEtherBalance(this string value) =>
         BigInteger.Parse(value, System.Globalization.NumberStyles.HexNumber)
             .ConvertToEtherAmount();
+
+    public static byte[] ToByteArray(this BaseBlock block)
+    {
+        var requiredSize = block.GetWrittenByteSize();
+        var rent = ArrayPool<byte>.Shared.Rent(requiredSize);
+        var context = rent.AsSpan(0, requiredSize);
+        try
+        {
+            var writingIndex = 0;
+            BinaryPrimitives.WriteInt32BigEndian(context[writingIndex..], block.Number);
+            writingIndex += sizeof(int);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Hash, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.ParentHash, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            BinaryPrimitives.WriteInt64BigEndian(context[writingIndex..], block.Nonce);
+            writingIndex += sizeof(long);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Sha3Uncles, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.LogsBloom, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.TransactionsRoot, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.StateRoot, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.ReceiptsRoot, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Miner, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Difficulty, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.TotalDifficulty, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.ExtraData, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Size, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            BinaryPrimitives.WriteUInt64BigEndian(context[writingIndex..], block.GasLimit);
+            writingIndex += sizeof(ulong);
+            context[writingIndex++] = 0;
+
+            BinaryPrimitives.WriteUInt64BigEndian(context[writingIndex..], block.GasUsed);
+            writingIndex += sizeof(ulong);
+            context[writingIndex++] = 0;
+
+            BinaryPrimitives.WriteInt64BigEndian(context[writingIndex..], block.TimeStamp);
+            writingIndex += sizeof(long);
+            context[writingIndex++] = 0;
+
+            var transactionStr = block.ComposeTransactionString();
+            writingIndex += Encoding.UTF8.GetBytes(transactionStr, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            writingIndex += Encoding.UTF8.GetBytes(block.Uncles, context[writingIndex..]);
+            context[writingIndex++] = 0;
+
+            return context.ToArray();
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rent);
+        }
+    }
 }

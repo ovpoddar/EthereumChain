@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Shared.Models;
-public abstract class MinerEventArgs : EventArgs
+public interface IMinerEventArgs
 {
-    public abstract ushort GetWrittenByteSize();
-    public abstract RequestEvent GetRequestEvent(Span<byte> context);
+    ushort GetWrittenByteSize();
+    RequestEvent GetRequestEvent(Span<byte> context);
 }
