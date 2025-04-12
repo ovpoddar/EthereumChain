@@ -1,15 +1,11 @@
 ﻿using API.Handlers;
-using API.Models;
-using Shared.Processors.Communication;
-using NBitcoin.Secp256k1;
+using Shared;
 using Shared.Models;
-using System.Buffers;
-using System.Collections.Generic;
+using Shared.Processors.Communication;
 using System.Data.SQLite;
 using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
-using Shared;
 
 namespace API.Processors.WebSocket;
 internal class MinerSocketProcessor : IAsyncDisposable
@@ -62,8 +58,8 @@ internal class MinerSocketProcessor : IAsyncDisposable
                     {
                         if (status.MessageType == WebSocketMessageType.Binary)
                         {
-                            var memory = offset == 0 
-                                ? maximumRead.AsSpan(0..status.Count) 
+                            var memory = offset == 0
+                                ? maximumRead.AsSpan(0..status.Count)
                                 : CollectionsMarshal.AsSpan(bucket);
                             RequestEvent response = new(memory);
                             var data = response.EventValue;

@@ -1,13 +1,9 @@
-﻿using Nethereum.Hex.HexConvertors;
-using Nethereum.Merkle.Patricia;
-using Shared.Core;
+﻿using Shared.Core;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text;
 
 namespace Shared.Helpers;

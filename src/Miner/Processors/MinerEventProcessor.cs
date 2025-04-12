@@ -1,17 +1,7 @@
-﻿using Nethereum.Merkle.Patricia;
-using Shared.Core;
+﻿using Shared.Core;
 using Shared.Models;
 using Shared.Processors.Communication;
-using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Channels;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Miner.Processors;
 internal static class MinerEventProcessor

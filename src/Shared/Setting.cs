@@ -1,9 +1,5 @@
 ﻿using Shared.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Shared;
 public static class Setting
@@ -17,8 +13,7 @@ public static class Setting
     public const int MinerNetworkCount = 20;
     public const decimal MinimumProfit = 0.5M;
     public const int SharedMemorySize = 1024 * 2;
-    public const string MinerAddress = "";
-    public const int ThreadUsage = -1; // 0 for all cores, negative will remove the total number of cores, posative will use the number of cores
+    public const int ThreadUsage = 1; // 0 for all cores, negative will remove the total number of cores, posative will use the number of cores
     public const string DefaultMinerAddress = "0x5561035012fCB5d4AF49A200412De5545087d3D6";
 
     public static readonly string WorkingRpcVersion = "\"2.0\"";

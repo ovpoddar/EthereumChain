@@ -11,9 +11,6 @@ using Shared.Processors.Communication;
 using System.Buffers;
 using System.Data.Common;
 using System.Data.SQLite;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Channels;
 
 internal class MinerWorker : BackgroundService
@@ -54,10 +51,7 @@ internal class MinerWorker : BackgroundService
         {
             // todo: declare a difficulty level which should be collect from the network
             // base on it mine the block and verify the hash
-            // if its a valid block then send it to the network
-            // if not then add more transaction to the block
-            // and try again
-
+            // todo: need a sleeping time to avoid the cpu usage when no transaction found
             BaseBlock? generatedBlock = null;
             var totalChunks = int.MaxValue / usableThreads;
 

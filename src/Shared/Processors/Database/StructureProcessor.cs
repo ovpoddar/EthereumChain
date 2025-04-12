@@ -1,13 +1,7 @@
-﻿using Shared;
-using Shared.Helpers;
-using System;
-using System.Collections.Generic;
+﻿using Shared.Helpers;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Shared.Processors.Database; 
+namespace Shared.Processors.Database;
 public static class StructureProcessor
 {
     // TODO: ADD REQUIERED ANNONTATIONS

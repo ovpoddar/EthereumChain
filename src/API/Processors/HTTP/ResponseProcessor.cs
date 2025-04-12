@@ -1,16 +1,9 @@
-﻿using API;
-using API.Handlers;
+﻿using API.Handlers;
 using API.Models;
 using Shared;
-using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace API.Processors.HTTP;
 internal static class ResponseProcessor

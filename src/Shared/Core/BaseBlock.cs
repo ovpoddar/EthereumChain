@@ -1,14 +1,8 @@
 ﻿using Shared.Helpers;
 using Shared.Models;
-using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Shared.Core;
 public class BaseBlock : BaseInternalBlock, IMinerEventArgs

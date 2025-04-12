@@ -1,9 +1,4 @@
-﻿using Nethereum.ABI.Util;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace Shared.Core;
+﻿namespace Shared.Core;
 
 public class Block : BaseInternalBlock
 {

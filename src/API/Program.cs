@@ -1,11 +1,11 @@
 ﻿using API.Handlers;
 using API.Models;
-using WebSocket = API.Processors.WebSocket;
 using Shared;
 using Shared.Processors.Communication;
 using Shared.Processors.Database;
 using System.Net;
 using HTTP = API.Processors.HTTP;
+using WebSocket = API.Processors.WebSocket;
 
 using (var sqlConnection = StructureProcessor.InitializedDatabase())
 using (var httpListener = new HttpListener())

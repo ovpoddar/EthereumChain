@@ -1,10 +1,4 @@
 ﻿using Shared.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Shared.Models;
 public readonly ref struct RequestEvent

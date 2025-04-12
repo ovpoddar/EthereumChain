@@ -1,7 +1,6 @@
 ﻿using Nethereum.Model;
 using Nethereum.Signer;
 using Shared.Helpers;
-using System.Numerics;
 using System.Text;
 
 namespace Shared.Core;

@@ -1,16 +1,6 @@
-﻿using API.Handlers;
-using API.Helpers;
+﻿using API.Helpers;
 using API.Models;
-using API.Processors;
-using Shared;
 using Shared.Core;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace API.Processors.WebSocket;
 internal class ResponseProcessor

@@ -1,15 +1,6 @@
-﻿using API.Helpers;
-using API.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.PortableExecutable;
+﻿using API.Models;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace API.Handlers;
 
@@ -94,7 +85,7 @@ internal class RequestSerializer
             var result = propertyReader.GetBoolean();
             return Unsafe.As<bool, T>(ref result);
         }
-            throw new NotImplementedException();
+        throw new NotImplementedException();
     }
 
     // this is a creepy method but so does the json
